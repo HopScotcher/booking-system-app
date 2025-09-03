@@ -1,3 +1,5 @@
+
+// THIS CODE WORKED IN SEEDING THE DATA
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -247,6 +249,11 @@ main()
     await prisma.$disconnect();
   });
 
+
+  
+
+// // THIS CODE DID NOT WORK WHEN SEEDING THE DATA, AND RESULTED IN THE ERROR PROVIDED
+
 // import { PrismaClient, Role, BookingStatus } from "@prisma/client";
 // import bcrypt from "bcryptjs";
 
@@ -256,18 +263,18 @@ main()
 //   console.log("🌱 Starting database seed...");
 
 //   // Clear existing data (in development only)
-//   // if (process.env.NODE_ENV === "development") {
-//   //   console.log("🗑️  Clearing existing data...");
-//   //   await prisma.$transaction([
-//   //     prisma.booking.deleteMany(),
-//   //     prisma.service.deleteMany(),
-//   //     prisma.user.deleteMany(),
-//   //     prisma.business.deleteMany(),
-//   //     prisma.account.deleteMany(),
-//   //     prisma.session.deleteMany(),
-//   //     prisma.verificationToken.deleteMany(),
-//   //   ]);
-//   // }
+//   if (process.env.NODE_ENV === "development") {
+//     console.log("🗑️  Clearing existing data...");
+//     await prisma.$transaction([
+//       prisma.booking.deleteMany(),
+//       prisma.service.deleteMany(),
+//       prisma.user.deleteMany(),
+//       prisma.business.deleteMany(),
+//       prisma.account.deleteMany(),
+//       prisma.session.deleteMany(),
+//       prisma.verificationToken.deleteMany(),
+//     ]);
+//   }
 
 //   // Create sample business first (users will be linked to it)
 //   console.log("🏢 Creating sample business...");
