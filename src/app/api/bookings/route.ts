@@ -105,6 +105,27 @@ export async function POST(request: NextRequest) {
       MOVE_IN_OUT_CLEANING: "Move-in/Move-out Cleaning",
     };
 
+
+    /*   FUTURE IMPROVEMENT ON DYNAMIC SERVICE MAPPING  */
+    /* Remove the hardcoded serviceMapping object and replace with:*/
+
+/* Find service by matching the incoming service identifier*/
+// const service = business.services.find((s: Service) => {
+  // Try multiple matching strategies:
+  // return (
+    // s.name === validatedData.service || // Exact name match
+    // s.id === validatedData.service ||   // Direct ID match
+    // s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === 
+    // validatedData.service.toLowerCase().replace(/[^a-z0-9]/g, '') // Normalized match
+  // );
+// });
+
+/* Alternative: If you want to send service ID from frontend*/
+// Just use: s.id === validatedData.service
+
+/* Alternative: If you want to use slugs, add a slug field to Service model*/
+// Then use: s.slug === validatedData.service
+
     const serviceName = serviceMapping[validatedData.service as keyof typeof serviceMapping];
     const service = business.services.find(
       (s: Service) => s.name === serviceName
