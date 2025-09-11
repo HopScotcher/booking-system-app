@@ -1,3 +1,5 @@
+// app/api/bookings/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
@@ -18,25 +20,26 @@ const adminLimiter = rateLimit({
   uniqueTokenPerInterval: 100,
 });
 
-// POST - Public booking creation (Phase 2)
+
+
+ 
+
+// POST - Create new booking
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting for customers
-    const identifier =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      request.headers.get("x-real-ip") ??
-      request.ip ??
+    // Rate limiting check
+    const identifier = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
       "anonymous";
     
     const { success } = await customerLimiter.check(identifier, 5);
-
     if (!success) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: "RATE_LIMIT_EXCEEDED",
-            message: "Too many requests. Please try again later.",
+            message: "Too many booking attempts. Please try again later.",
           },
         },
         { status: 429 }
@@ -45,44 +48,40 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json();
-
     let validatedData;
     try {
       validatedData = bookingSchema.parse(body);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
+    } catch (err) {
+      if (err instanceof z.ZodError) {
         return NextResponse.json(
           {
             success: false,
             error: {
               code: "VALIDATION_ERROR",
-              message: "Invalid request data",
-              details: error.issues.map((issue) => ({
-                field: issue.path.join("."),
-                message: issue.message,
-              })),
+              message: "Invalid booking data",
+              details: err.issues,
             },
           },
           { status: 400 }
         );
       }
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "INVALID_REQUEST",
-            message: "Invalid JSON payload",
-          },
-        },
-        { status: 400 }
-      );
+      throw err; // Re-throw if not a Zod error
     }
 
-    // Get the business and service from database
+    // Fetch active business and its services
     const business = await db.business.findFirst({
-      where: { isActive: true, deletedAt: null },
-      include: { services: { where: { isActive: true, deletedAt: null } } },
+      where: { 
+        isActive: true,
+        deletedAt: null 
+      },
+      include: {
+        services: {
+          where: { 
+            isActive: true,
+            deletedAt: null 
+          }
+        }
+      }
     });
 
     if (!business) {
@@ -90,7 +89,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: {
-            code: "NO_BUSINESS_FOUND",
+            code: "BUSINESS_NOT_FOUND",
             message: "No active business found",
           },
         },
@@ -98,53 +97,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Map service enum to database service
-    const serviceMapping = {
+    // Map service enum to actual service
+    const serviceMapping: Record<string, string> = {
       BASIC_CLEANING: "Basic House Cleaning",
       DEEP_CLEANING: "Deep Cleaning Service",
       MOVE_IN_OUT_CLEANING: "Move-in/Move-out Cleaning",
     };
 
-
-    /*   FUTURE IMPROVEMENT ON DYNAMIC SERVICE MAPPING  */
-    /* Remove the hardcoded serviceMapping object and replace with:*/
-
-/* Find service by matching the incoming service identifier*/
-// const service = business.services.find((s: Service) => {
-  // Try multiple matching strategies:
-  // return (
-    // s.name === validatedData.service || // Exact name match
-    // s.id === validatedData.service ||   // Direct ID match
-    // s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === 
-    // validatedData.service.toLowerCase().replace(/[^a-z0-9]/g, '') // Normalized match
-  // );
-// });
-
-/* Alternative: If you want to send service ID from frontend*/
-// Just use: s.id === validatedData.service
-
-/* Alternative: If you want to use slugs, add a slug field to Service model*/
-// Then use: s.slug === validatedData.service
-
-    const serviceName = serviceMapping[validatedData.service as keyof typeof serviceMapping];
-    const service = business.services.find(
-      (s: Service) => s.name === serviceName
-    );
+    const serviceName = serviceMapping[validatedData.service];
+    const service = business.services.find(s => s.name === serviceName);
 
     if (!service) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            code: "INVALID_SERVICE",
-            message: "Selected service not found in database",
+            code: "SERVICE_NOT_FOUND",
+            message: "Selected service is not available",
           },
         },
         { status: 400 }
       );
     }
 
-    // Create booking in database
+    // Create the booking
     const booking = await db.booking.create({
       data: {
         businessId: business.id,
@@ -162,11 +138,19 @@ export async function POST(request: NextRequest) {
         totalPrice: service.price,
         notes: validatedData.notes,
         status: "PENDING",
-        confirmationCode: `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        confirmationCode: `BK-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      },
+      include: {
+        business: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
 
-    // Return success response
     return NextResponse.json(
       {
         success: true,
@@ -178,14 +162,16 @@ export async function POST(request: NextRequest) {
           appointmentDate: booking.appointmentDate,
           appointmentTime: booking.appointmentTime,
           status: booking.status,
+          business: booking.business,
         },
         message: "Booking created successfully",
       },
       { status: 201 }
     );
+
   } catch (error) {
     console.error("Booking creation error:", error);
-
+    
     // Handle Prisma-specific errors
     if (error instanceof Error) {
       if (error.message.includes("Unique constraint")) {
@@ -194,13 +180,13 @@ export async function POST(request: NextRequest) {
             success: false,
             error: {
               code: "DUPLICATE_BOOKING",
-              message: "A booking with these details already exists",
+              message: "This booking already exists",
             },
           },
           { status: 409 }
         );
       }
-
+      
       if (error.message.includes("Foreign key constraint")) {
         return NextResponse.json(
           {
@@ -215,19 +201,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generic database error
+    // Generic error response
     return NextResponse.json(
       {
         success: false,
         error: {
-          code: "DATABASE_ERROR",
-          message: "Failed to create booking. Please try again later.",
+          code: "SERVER_ERROR",
+          message: "Failed to create booking",
         },
       },
       { status: 500 }
     );
   }
-}
+} 
+
 
 // GET - Admin booking fetching (Phase 3)
 export async function GET(req: NextRequest) {
@@ -236,7 +223,6 @@ export async function GET(req: NextRequest) {
     const identifier = 
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
-      req.ip ??
       "unknown";
     
     const { success } = await adminLimiter.check(identifier, 20);

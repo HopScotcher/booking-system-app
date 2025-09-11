@@ -1,95 +1,85 @@
-import { Booking, Business, Service, User, BookingStatus, Role } from '@prisma/client'
+// import { Booking, Business, Service, User, BookingStatus, Role } from '@prisma/client'
 
-// Extended types with relations
-export type BookingWithRelations = Booking & {
-  business: Business
-  service: Service
-  user?: User | null
-}
+// // Extended types with relations
+// export type BookingWithRelations = Booking & {
+//   business: Business
+//   service: Service
+//   user?: User | null
+// }
 
-export type BusinessWithServices = Business & {
-  services: Service[]
-}
+// export type BusinessWithServices = Business & {
+//   services: Service[]
+// }
 
-export type ServiceWithBusiness = Service & {
-  business: Business
-}
+// export type ServiceWithBusiness = Service & {
+//   business: Business
+// }
 
-// API Response types
-export interface ApiResponse<T = any> {
-  success: boolean
-  data?: T
-  error?: {
-    code: string
-    message: string
-    details?: any
-  }
-}
+// // API Response types
+// export interface ApiResponse<T = any> {
+//   success: boolean
+//   data?: T
+//   error?: {
+//     code: string
+//     message: string
+//     details?: any
+//   }
+// }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination?: {
-    page: number
-    limit: number
-    total: number
-    pages: number
-  }
-}
+// export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+//   pagination?: {
+//     page: number
+//     limit: number
+//     total: number
+//     pages: number
+//   }
+// }
 
-// Form types
-export interface BookingFormData {
-  serviceId: string
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  customerAddress: string
-  appointmentDate: string
-  appointmentTime: string
-  notes?: string
-}
 
-export interface LoginFormData {
-  email: string
-  password: string
-}
 
-// Dashboard types
-export interface DashboardStats {
-  totalBookings: number
-  pendingBookings: number
-  confirmedBookings: number
-  completedBookings: number
-  totalRevenue: number
-  monthlyRevenue: number
-}
+// export interface LoginFormData {
+//   email: string
+//   password: string
+// }
 
-// Time slot types
-export interface TimeSlot {
-  time: string
-  available: boolean
-  reason?: string
-}
+// // Dashboard types
+// export interface DashboardStats {
+//   totalBookings: number
+//   pendingBookings: number
+//   confirmedBookings: number
+//   completedBookings: number
+//   totalRevenue: number
+//   monthlyRevenue: number
+// }
 
-// Business hours type
-export interface BusinessHours {
-  [key: string]: {
-    open: string
-    close: string
-    closed?: boolean
-  }
-}
+// // Time slot types
+// export interface TimeSlot {
+//   time: string
+//   available: boolean
+//   reason?: string
+// }
 
-// Booking settings type
-export interface BookingSettings {
-  maxAdvanceDays: number
-  minAdvanceHours: number
-  slotDuration: number
-  bufferTime: number
-  workingDays: string[]
-  timeSlots: string[]
-}
+// // Business hours type
+// export interface BusinessHours {
+//   [key: string]: {
+//     open: string
+//     close: string
+//     closed?: boolean
+//   }
+// }
 
-// Export Prisma enums for convenience
-export { BookingStatus, Role }
+// // Booking settings type
+// export interface BookingSettings {
+//   maxAdvanceDays: number
+//   minAdvanceHours: number
+//   slotDuration: number
+//   bufferTime: number
+//   workingDays: string[]
+//   timeSlots: string[]
+// }
+
+// // Export Prisma enums for convenience
+// export { BookingStatus, Role }
 
 
 export interface BookingData {
@@ -117,13 +107,4 @@ export interface BookingData {
   }
 
 
-  export interface BookingFormData {
-    service: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" | null;
-    date: Date | null;
-    time: string | null;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    address: string;
-    notes?: string;
-  }
+   

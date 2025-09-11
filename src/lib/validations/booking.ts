@@ -38,7 +38,7 @@ export const bookingSchema = z.object({
   address: z
     .string()
     .min(1, "Address is required")
-    .min(10, "Address must be at least 10 characters")
+    .min(5, "Address must be at least 5 characters")
     .max(200, "Address must be at most 200 characters"),
   notes: z
     .string()

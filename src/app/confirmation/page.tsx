@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BookingData } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +15,7 @@ import {
   FileText,
   CheckCircle,
 } from "lucide-react";
+import { BookingData } from "@/types/types";
 
 export default function ConfirmationPage() {
   const searchParams = useSearchParams();

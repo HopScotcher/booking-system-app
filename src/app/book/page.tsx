@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { BookingForm } from "@/components/booking/BookingForm";
-import { BookingFormData } from "@/types/types";
+ 
+import { useCreateBooking } from "@/hooks/useBooking";
+import { useMutation } from "@tanstack/react-query";
 
 export const metadata: Metadata = {
   title: "Book Your Cleaning Service | SparkleClean",
@@ -17,16 +19,12 @@ export const metadata: Metadata = {
   },
 };
 
+
+
+
 export default function BookPage() {
-  async function handleBookingSubmit(data: BookingFormData) {
-    "use server";
 
-    // Save booking to DB (example with Prisma)
-    // await prisma.booking.create({ data })
-
-    console.log("Booking received:", data);
-    return { success: true };
-  }
+    
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -91,7 +89,7 @@ export default function BookPage() {
 
             {/* Form Content */}
             <div className="p-6 sm:p-8">
-              <BookingForm onSubmit={handleBookingSubmit} />
+              <BookingForm />
             </div>
           </div>
         </div>
@@ -176,7 +174,7 @@ export default function BookPage() {
       <footer className="bg-gray-50 border-t mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-sm text-gray-500">
-            <p>&copy; 2024 SparkleClean. All rights reserved.</p>
+            <p>&copy; 2025 SparkleClean. All rights reserved.</p>
             <p className="mt-1">
               Professional cleaning services for homes and offices
             </p>

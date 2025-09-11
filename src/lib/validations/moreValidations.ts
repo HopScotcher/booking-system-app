@@ -14,16 +14,16 @@ export const registerSchema = z.object({
 })
 
 // Booking validation schemas
-export const createBookingSchema = z.object({
-  serviceId: z.string().cuid('Invalid service ID'),
-  customerName: z.string().min(2, 'Name must be at least 2 characters'),
-  customerEmail: z.string().email('Please enter a valid email address'),
-  customerPhone: z.string().min(10, 'Please enter a valid phone number'),
-  customerAddress: z.string().min(10, 'Please enter a complete address'),
-  appointmentDate: z.string().datetime('Please select a valid date'),
-  appointmentTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please select a valid time'),
-  notes: z.string().optional(),
-})
+// export const createBookingSchema = z.object({
+//   serviceId: z.string().cuid('Invalid service ID'),
+//   customerName: z.string().min(2, 'Name must be at least 2 characters'),
+//   customerEmail: z.string().email('Please enter a valid email address'),
+//   customerPhone: z.string().min(10, 'Please enter a valid phone number'),
+//   customerAddress: z.string().min(10, 'Please enter a complete address'),
+//   appointmentDate: z.string().datetime('Please select a valid date'),
+//   appointmentTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please select a valid time'),
+//   notes: z.string().optional(),
+// })
 
 export const updateBookingStatusSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
@@ -50,7 +50,7 @@ export const createServiceSchema = z.object({
 // Type exports
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
-export type CreateBookingInput = z.infer<typeof createBookingSchema>
+// export type CreateBookingInput = z.infer<typeof createBookingSchema>
 export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>
 export type CreateBusinessInput = z.infer<typeof createBusinessSchema>
 export type CreateServiceInput = z.infer<typeof createServiceSchema>
