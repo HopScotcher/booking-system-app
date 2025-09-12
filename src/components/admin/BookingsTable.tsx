@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { BookingStatus } from "@prisma/client";
+import { BookingStatus, Booking } from "@prisma/client";
 import StatusUpdateModal from "./StatusUpdateModal";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { Button } from "@/components/ui/button";
  
 
-interface Booking {
-  id: string;
-  confirmationCode: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  serviceName: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  status: BookingStatus;
-}
+// interface Booking {
+//   id: string;
+//   confirmationCode: string;
+//   customerName: string;
+//   customerEmail: string;
+//   customerPhone: string;
+//   serviceName: string;
+//   appointmentDate: string;
+//   appointmentTime: string;
+//   status: BookingStatus;
+// }
 
 interface BookingsTableProps {
   bookings: Booking[];

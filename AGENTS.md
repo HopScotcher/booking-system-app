@@ -16,42 +16,46 @@ The system allows customers to book services online and businesses to manage tho
 
 ## Project Structure
 ```
-booking-system/
-├── app/                          # Next.js App Router
-│   ├── (public)/                 # Public routes (no auth required)
-│   │   ├── book/                 # Customer booking flow
-│   │   └── confirmation/         # Booking confirmation
-│   ├── admin/                    # Protected admin routes
-│   │   ├── login/                # Admin login
-│   │   ├── dashboard/            # Main dashboard
-│   │   └── bookings/             # Booking management
-│   ├── api/                      # API routes
-│   │   ├── auth/                 # NextAuth endpoints
-│   │   ├── bookings/             # Booking CRUD operations
-│   │   └── admin/                # Admin-only endpoints
-│   ├── globals.css               # Global styles
-│   ├── layout.tsx                # Root layout
-│   └── page.tsx                  # Homepage
-├── components/                   # Reusable UI components
-│   ├── ui/                       # shadcn/ui components
-│   ├── forms/                    # Form components
-│   ├── admin/                    # Admin-specific components
-│   └── booking/                  # Booking-related components
-├── lib/                          # Utility functions and configurations
-│   ├── auth.ts                   # NextAuth configuration
-│   ├── db.ts                     # Prisma client setup
-│   ├── email.ts                  # Email service utilities
-│   ├── validations.ts            # Zod schemas
-│   └── utils.ts                  # General utilities
-├── prisma/                       # Database schema and migrations
-│   ├── schema.prisma             # Database schema
-│   ├── migrations/               # Migration files
-│   └── seed.ts                   # Database seeding
-├── types/                        # TypeScript type definitions
-├── docs/                         # Documentation folder
-│   └── PRD.md                    # Product Requirements Document (Markdown format)
-└── .cursorrules                  # Cursor rules for coding style, libraries, conventions
-```
+src/
+├── app/
+│   ├── admin/
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── dashboard/
+│   │   │   └── page.tsx
+│   │   ├── bookings/
+│   │   │   └── page.tsx
+│   │   └── layout.tsx
+│   └── api/
+│       ├── auth/
+│       │   └── [...nextauth]/
+│       │       └── route.ts
+│       └── bookings/
+│           ├── route.ts (GET with filters)
+│           └── [id]/
+│               └── route.ts (PATCH for updates)
+├── components/
+│   ├── admin/
+│   │   ├── BookingsTable.tsx
+│   │   ├── BookingStatusBadge.tsx
+│   │   ├── BookingFilters.tsx
+│   │   ├── StatusUpdateModal.tsx
+│   │   └── DashboardLayout.tsx
+│   ├── auth/
+│   │   ├── LoginForm.tsx
+│   │   └── ProtectedRoute.tsx
+│   └── ui/ (existing shadcn components)
+├── lib/
+│   ├── auth/
+│   │   ├── config.ts
+│   │   └── providers.ts
+│   ├── validations/
+│   │   └── admin.ts
+│   └── utils/
+│       └── dates.ts
+├── middleware.ts
+└── types/
+    └── admin.ts
 
 ## Database Schema (Key Models)
 ```prisma

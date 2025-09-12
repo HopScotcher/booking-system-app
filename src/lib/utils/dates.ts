@@ -71,3 +71,13 @@ export function parseDateRange(
   }
   return result;
 }
+
+
+/**
+ *  Convert db serviceDuration minutes to hours
+ */
+
+export function minutesToHours(minutes?: number) {
+  if (!minutes) return 2;
+  return minutes / 60;
+}

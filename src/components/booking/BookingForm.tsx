@@ -7,6 +7,7 @@ import { ServiceSelector } from "./ServiceSelector";
 import { DateTimePicker } from "./DateTimePicker";
 import { CustomerDetails } from "./CustomerDetails";
 import { bookingSchema, type BookingInput } from "@/lib/validations/booking";
+import { BookingFormData } from "@/types/types";
 import { SERVICES } from "@/lib/data/services";
 import { useCreateBooking } from "@/hooks/useBooking";
 import { toast } from "sonner";
@@ -14,19 +15,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-
 type Step = 1 | 2 | 3 | 4;
-
-interface BookingFormData {
-  service: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" ;
-  date: Date | null;
-  time: string | null;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  address: string;
-  notes?: string;
-}
 
 const STEPS = [
   {
@@ -44,12 +33,12 @@ export interface BookingFormProps {
   className?: string;
 }
 
-export function BookingForm({  className }: BookingFormProps) {
+export function BookingForm({ className }: BookingFormProps) {
   const [currentStep, setCurrentStep] = React.useState<Step>(1);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const createBooking = useCreateBooking()
-  const router = useRouter()
+  const createBooking = useCreateBooking();
+  const router = useRouter();
 
   const [formData, setFormData] = useState<BookingFormData>({
     service: "BASIC_CLEANING",
@@ -62,64 +51,65 @@ export function BookingForm({  className }: BookingFormProps) {
     notes: "",
   });
 
-
-   async function submitBookingForm() {
-  if (!formData.service || !formData.date || !formData.time) {
-    setError("Please complete all required fields");
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-    setError(null);
-
-    // Combine date and time into a single Date object for the Zod schema
-    const appointmentDateTime = new Date(formData.date);
-    const [hours, minutes] = formData.time.split(":").map(Number);
-    appointmentDateTime.setHours(hours, minutes, 0, 0);
-
-    // Prepare data for validation and API
-    const bookingData: BookingInput = {
-      customerName: formData.customerName,
-      customerEmail: formData.customerEmail,
-      customerPhone: formData.customerPhone,
-      service: formData.service,
-      date: appointmentDateTime,
-      time: formData.time,
-      address: formData.address,
-      notes: formData.notes,
-    };
-
-    // Validate with Zod schema
-    const validatedData = bookingSchema.parse(bookingData);
-
-    // Send to API endpoint
-    const res = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(validatedData),
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      toast.error("Failed to create booking", {
-        description: "Please try again later"
-      })
-      throw new Error(errorData?.error?.message || "Failed to create booking");
+  async function submitBookingForm() {
+    if (!formData.service || !formData.date || !formData.time) {
+      setError("Please complete all required fields");
+      return;
     }
 
-    
-    const data = await res.json();
-    toast.success("Booking Created successfully")
-    router.push(`/confirmation?id=${data.data.id}`);
-     
-  } catch (err: any) {
-    setError(err.message || "An unexpected error occurred");
-    return null;
-  } finally {
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Combine date and time into a single Date object for the Zod schema
+      const appointmentDateTime = new Date(formData.date);
+      const [hours, minutes] = formData.time.split(":").map(Number);
+      appointmentDateTime.setHours(hours, minutes, 0, 0);
+
+      // Prepare data for validation and API
+      const bookingData: BookingInput = {
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+        service: formData.service,
+        date: appointmentDateTime,
+        time: formData.time,
+        address: formData.address,
+        notes: formData.notes,
+      };
+
+      console.log(`BookingForm.tsx: ${bookingData}`);
+
+      // Validate with Zod schema
+      const validatedData = bookingSchema.parse(bookingData);
+
+      // Send to API endpoint
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validatedData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        toast.error("Failed to create booking", {
+          description: "Please try again later",
+        });
+        throw new Error(
+          errorData?.error?.message || "Failed to create booking"
+        );
+      }
+
+      const data = await res.json();
+      toast.success("Booking Created successfully");
+      router.push(`/confirmation?id=${data.data.id}`);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   }
-}
 
   const updateFormData = (updates: Partial<BookingFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -182,125 +172,120 @@ export function BookingForm({  className }: BookingFormProps) {
     handleNext();
   };
 
+  //   const handleFinalSubmit = async () => {
+  //   if (!formData.service || !formData.date || !formData.time) {
+  //     setError("Please complete all required fields");
+  //     return;
+  //   }
 
+  //   try {
+  //     setIsLoading(true);
+  //     setError(null);
 
+  //     // Combine date and time into a single DateTime
+  //     const appointmentDateTime = new Date(formData.date);
+  //     const [hours, minutes] = formData.time.split(":").map(Number);
+  //     appointmentDateTime.setHours(hours, minutes, 0, 0);
 
-//   const handleFinalSubmit = async () => {
-//   if (!formData.service || !formData.date || !formData.time) {
-//     setError("Please complete all required fields");
-//     return;
-//   }
+  //     const bookingData: BookingInput = {
+  //       customerName: formData.customerName,
+  //       customerEmail: formData.customerEmail,
+  //       customerPhone: formData.customerPhone,
+  //       service: formData.service,
+  //       date: appointmentDateTime,
+  //       time: formData.time,
+  //       address: formData.address,
+  //       notes: formData.notes,
+  //     };
 
-//   try {
-//     setIsLoading(true);
-//     setError(null);
+  //     // Validate with Zod schema
+  //     const validatedData = bookingSchema.parse(bookingData);
 
-//     // Combine date and time into a single DateTime
-//     const appointmentDateTime = new Date(formData.date);
-//     const [hours, minutes] = formData.time.split(":").map(Number);
-//     appointmentDateTime.setHours(hours, minutes, 0, 0);
+  //     // Send to API endpoint
+  //     const res = await fetch("/api/bookings", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(validatedData),
+  //     });
 
-//     const bookingData: BookingInput = {
-//       customerName: formData.customerName,
-//       customerEmail: formData.customerEmail,
-//       customerPhone: formData.customerPhone,
-//       service: formData.service,
-//       date: appointmentDateTime,
-//       time: formData.time,
-//       address: formData.address,
-//       notes: formData.notes,
-//     };
+  //     if (!res.ok) {
+  //       const errorData = await res.json();
+  //       throw new Error(errorData?.error?.message || "Failed to create booking");
+  //     }
 
-//     // Validate with Zod schema
-//     const validatedData = bookingSchema.parse(bookingData);
+  //     const data = await res.json();
 
-//     // Send to API endpoint
-//     const res = await fetch("/api/bookings", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(validatedData),
-//     });
+  //     alert(`Booking created! Confirmation code: ${data.data.confirmationCode}`);
+  //   } catch (err) {
+  //     if (err instanceof Error) {
+  //       setError(err.message);
+  //     } else {
+  //       setError("An unexpected error occurred");
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-//     if (!res.ok) {
-//       const errorData = await res.json();
-//       throw new Error(errorData?.error?.message || "Failed to create booking");
-//     }
+  //  const handleFinalSubmit = async () => {
 
-//     const data = await res.json();
+  //       if (!formData.service || !formData.date || !formData.time) {
+  //         setError("Please complete all required fields");
+  //         return;
+  //       }
 
-//     alert(`Booking created! Confirmation code: ${data.data.confirmationCode}`);
-//   } catch (err) {
-//     if (err instanceof Error) {
-//       setError(err.message);
-//     } else {
-//       setError("An unexpected error occurred");
-//     }
-//   } finally {
-//     setIsLoading(false);
-//   }
-// };
+  //       try {
+  //         setIsLoading(true);
+  //         setError(null);
 
-//  const handleFinalSubmit = async () => {
+  //         // Combine date and time into a single DateTime
+  //         const appointmentDateTime = new Date(formData.date);
+  //         const [hours, minutes] = formData.time.split(":").map(Number);
+  //         appointmentDateTime.setHours(hours, minutes, 0, 0);
 
-//       if (!formData.service || !formData.date || !formData.time) {
-//         setError("Please complete all required fields");
-//         return;
-//       }
-  
-//       try {
-//         setIsLoading(true);
-//         setError(null);
-  
-//         // Combine date and time into a single DateTime
-//         const appointmentDateTime = new Date(formData.date);
-//         const [hours, minutes] = formData.time.split(":").map(Number);
-//         appointmentDateTime.setHours(hours, minutes, 0, 0);
-  
-//         const bookingData: BookingInput = {
-//           customerName: formData.customerName,
-//           customerEmail: formData.customerEmail,
-//           customerPhone: formData.customerPhone,
-//           service: formData.service,
-//           date: appointmentDateTime,
-//           time: formData.time,
-//           address: formData.address,
-//           notes: formData.notes,
-//         };
-  
-//         // Validate with Zod schema
-//         const validatedData = bookingSchema.parse(bookingData);
-//         console.log(`booking form: ${{...validatedData}}`)
-  
-  
-//         createBooking.mutate(validatedData, {
-//           onSuccess: (res) => {
-//             alert(`Booking created! Confirmation code: ${res.data.data.confirmationCode}`);
-//              toast.success('Booking Created!', {
-//             description: `Confirmation code: ${res.data.data.confirmationCode}`,
-//           })
-//           },
-//           onError: (err: any) => {
-//             setError(err?.response?.data?.error?.message || "Failed to create booking");
-//             toast.error("Error creating booking",{
-//               description: `${err?.response?.data?.error?.message}`
-//             })
-//           },
-//         });
-//       }  
-        
-//       catch (err) {
-//         if (err instanceof Error) {
-//           setError(err.message);
-//         } else {
-//           setError("An unexpected error occurred");
-//         }
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
+  //         const bookingData: BookingInput = {
+  //           customerName: formData.customerName,
+  //           customerEmail: formData.customerEmail,
+  //           customerPhone: formData.customerPhone,
+  //           service: formData.service,
+  //           date: appointmentDateTime,
+  //           time: formData.time,
+  //           address: formData.address,
+  //           notes: formData.notes,
+  //         };
 
+  //         // Validate with Zod schema
+  //         const validatedData = bookingSchema.parse(bookingData);
+  //         console.log(`booking form: ${{...validatedData}}`)
+
+  //         createBooking.mutate(validatedData, {
+  //           onSuccess: (res) => {
+  //             alert(`Booking created! Confirmation code: ${res.data.data.confirmationCode}`);
+  //              toast.success('Booking Created!', {
+  //             description: `Confirmation code: ${res.data.data.confirmationCode}`,
+  //           })
+  //           },
+  //           onError: (err: any) => {
+  //             setError(err?.response?.data?.error?.message || "Failed to create booking");
+  //             toast.error("Error creating booking",{
+  //               description: `${err?.response?.data?.error?.message}`
+  //             })
+  //           },
+  //         });
+  //       }
+
+  //       catch (err) {
+  //         if (err instanceof Error) {
+  //           setError(err.message);
+  //         } else {
+  //           setError("An unexpected error occurred");
+  //         }
+  //       } finally {
+  //         setIsLoading(false);
+  //       }
+  //     };
 
   const getSelectedService = () => {
     return SERVICES.find((s) => s.id === formData.service);

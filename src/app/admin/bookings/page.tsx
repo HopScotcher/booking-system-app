@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import BookingFilters from "@/components/admin/BookingFilters";
-// import BookingsTable from "@/components/admin/BookingsTable"; // To be implemented
+import BookingsTable from "@/components/admin/BookingsTable";
+import { Booking, Service } from "@prisma/client";
+import { toast } from "sonner";
 
 export const metadata: Metadata = {
   title: "Bookings | Admin Dashboard",
@@ -19,16 +21,42 @@ function ErrorBoundary({ error }: { error: Error }) {
 }
 
 export default async function BookingsPage() {
-  // Server-side fetch for initial bookings data and services for filters
-  // (Replace with real fetch logic as needed)
-  let bookings = [];
-  let services = [];
-  let error = null;
+  let error: Error | null = null;
+  let bookings: Booking[] = [];
+  let services: Service[] = [];
+
   try {
-    // Example: Fetch bookings and services from your API or db
-    // const res = await fetch("/api/bookings");
-    // bookings = await res.json();
-    // services = await fetchServices();
+    // Fetch bookings data from the API
+    const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/bookings`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // You may need to forward cookies/session headers for auth
+      },
+      cache: "no-store",
+    });
+
+    const bookingsJson = await bookingsRes.json();
+    if (!bookingsRes.ok || !bookingsJson.success) {
+      toast.error("Failed to fetch bookings")
+      throw new Error(bookingsJson.error?.message || "Failed to fetch bookings");
+    }
+    bookings = bookingsJson.data.bookings || [];
+
+    // Fetch services for the filters
+    const servicesRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/services`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+    const servicesJson = await servicesRes.json();
+    if (!servicesRes.ok || !servicesJson.success) {
+      toast.error("Failed to fetch services")
+      throw new Error(servicesJson.error?.message || "Failed to fetch services");
+    }
+    services = servicesJson.data || [];
   } catch (e: any) {
     error = e;
   }
@@ -43,8 +71,7 @@ export default async function BookingsPage() {
       </Suspense>
       <div className="mt-8">
         <Suspense fallback={<div>Loading bookings...</div>}>
-          {/* <BookingsTable bookings={bookings} /> */}
-          <div className="text-gray-500">Bookings table coming soon...</div>
+          <BookingsTable bookings={bookings} />
         </Suspense>
       </div>
     </main>

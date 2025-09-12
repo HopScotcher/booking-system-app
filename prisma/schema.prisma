@@ -135,7 +135,7 @@ model Booking {
   id               String        @id @default(cuid())
   businessId       String
   serviceId        String?
-  serviceName      String?
+  serviceName      String
   servicePrice     Float?
   serviceDuration  Int?
   customerName     String

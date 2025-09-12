@@ -34,3 +34,111 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+```
+booking-system-app
+├─ .cursorrules
+├─ components.json
+├─ docs
+│  └─ PRD.md
+├─ eslint.config.mjs
+├─ GUIDE.md
+├─ lib
+│  └─ db.ts
+├─ middleware.ts
+├─ next.config.ts
+├─ package-lock.json
+├─ package.json
+├─ postcss.config.mjs
+├─ prisma
+│  ├─ schema.prisma
+│  └─ seed.ts
+├─ public
+│  ├─ file.svg
+│  ├─ globe.svg
+│  ├─ next.svg
+│  ├─ vercel.svg
+│  └─ window.svg
+├─ README.md
+├─ src
+│  ├─ app
+│  │  ├─ admin
+│  │  │  ├─ bookings
+│  │  │  │  └─ page.tsx
+│  │  │  ├─ dashboard
+│  │  │  │  └─ page.tsx
+│  │  │  ├─ layout.tsx
+│  │  │  └─ login
+│  │  │     └─ page.tsx
+│  │  ├─ api
+│  │  │  ├─ auth
+│  │  │  │  └─ [...nextauth]
+│  │  │  │     └─ route.ts
+│  │  │  └─ bookings
+│  │  │     ├─ route.ts
+│  │  │     └─ [id]
+│  │  │        └─ route.ts
+│  │  ├─ book
+│  │  │  └─ page.tsx
+│  │  ├─ confirmation
+│  │  │  └─ page.tsx
+│  │  ├─ favicon.ico
+│  │  ├─ globals.css
+│  │  ├─ layout.tsx
+│  │  ├─ page.tsx
+│  │  └─ providers.tsx
+│  ├─ components
+│  │  ├─ admin
+│  │  │  ├─ BookingFilters.tsx
+│  │  │  ├─ BookingsTable.tsx
+│  │  │  ├─ BookingStatusBadge.tsx
+│  │  │  ├─ DashboardLayout.tsx
+│  │  │  └─ StatusUpdateModal.tsx
+│  │  ├─ auth
+│  │  │  └─ LoginForm.tsx
+│  │  ├─ booking
+│  │  │  ├─ BookingForm.tsx
+│  │  │  ├─ CustomerDetails.tsx
+│  │  │  ├─ DateTimePicker.tsx
+│  │  │  └─ ServiceSelector.tsx
+│  │  └─ ui
+│  │     ├─ alert.tsx
+│  │     ├─ badge.tsx
+│  │     ├─ button.tsx
+│  │     ├─ calendar.tsx
+│  │     ├─ card.tsx
+│  │     ├─ dialog.tsx
+│  │     ├─ form.tsx
+│  │     ├─ input.tsx
+│  │     ├─ label.tsx
+│  │     ├─ select.tsx
+│  │     ├─ sonner.tsx
+│  │     ├─ table.tsx
+│  │     └─ textarea.tsx
+│  ├─ generated
+│  ├─ hooks
+│  │  ├─ getBiz.ts
+│  │  └─ useBooking.ts
+│  ├─ lib
+│  │  ├─ api
+│  │  │  ├─ client.ts
+│  │  │  └─ endpoints.ts
+│  │  ├─ auth
+│  │  │  └─ config.ts
+│  │  ├─ data
+│  │  │  └─ services.ts
+│  │  ├─ queryClient.ts
+│  │  ├─ rate-limit.ts
+│  │  ├─ utils
+│  │  │  └─ dates.ts
+│  │  ├─ utils.ts
+│  │  └─ validations
+│  │     ├─ admin.ts
+│  │     ├─ booking.ts
+│  │     └─ moreValidations.ts
+│  └─ types
+│     ├─ next-auth.d.ts
+│     └─ types.ts
+└─ tsconfig.json
+
+```

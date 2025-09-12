@@ -16,6 +16,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { BookingData } from "@/types/types";
+import { minutesToHours } from "date-fns";
 
 export default function ConfirmationPage() {
   const searchParams = useSearchParams();
@@ -58,7 +59,7 @@ export default function ConfirmationPage() {
     startDate.setHours(hours, minutes, 0, 0);
 
     const endDate = new Date(startDate);
-    endDate.setHours(startDate.getHours() + (booking.serviceDuration || 2));
+    endDate.setHours(startDate.getHours() + (minutesToHours(booking.serviceDuration) || 2));
 
     const event = {
       title: `${booking.serviceName} - SparkleClean`,
@@ -188,7 +189,7 @@ export default function ConfirmationPage() {
               <div>
                 <p className="text-sm text-gray-500">Duration</p>
                 <p className="font-medium">
-                  {booking.serviceDuration || 2} hours
+                  {minutesToHours(booking.serviceDuration) || 2} hours
                 </p>
               </div>
               <div>
@@ -227,7 +228,7 @@ export default function ConfirmationPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Duration</p>
-                <p className="font-medium">{booking.duration || 2} hours</p>
+                <p className="font-medium">{minutesToHours(booking.duration) || 2} hours</p>
               </div>
             </CardContent>
           </Card>

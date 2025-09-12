@@ -106,5 +106,18 @@ export interface BookingData {
     createdAt: string
   }
 
+  export interface BookingFormData {
+  service: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" ;
+  date: Date | null;
+  time: string | null;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  address: string;
+  notes?: string;
+}
+
+
+
 
    

@@ -18,20 +18,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { BookingStatus } from "@prisma/client";
+import { Booking, BookingStatus } from "@prisma/client";
 import { toast } from "sonner";
 import BookingStatusBadge from "./BookingStatusBadge";
 
-interface StatusUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  booking: {
-    id: string;
-    customerName: string;
-    serviceName: string;
-    appointmentDate: string;
-    status: BookingStatus;
-  };
+  booking: Booking;
   onStatusUpdated?: (newStatus: BookingStatus) => void;
 }
 
