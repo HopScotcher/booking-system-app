@@ -79,7 +79,7 @@ async function main() {
       email: "jennifer.smith@email.com",
       emailVerified: new Date(),
       phone: "+1-555-CUST-01",
-      role: "CUSTOMER",
+      // role: "CUSTOMER",
       isActive: true,
     },
   });
@@ -144,7 +144,7 @@ async function main() {
       notes:
         "Please focus extra attention on the kitchen. Two cats in the house.",
       status: "CONFIRMED",
-      userId: customerUser.id,
+      // userId: customerUser.id,
       reminderSent: false,
     },
   });
@@ -168,7 +168,7 @@ async function main() {
       notes:
         "Move-in cleaning for new apartment. All rooms need deep cleaning.",
       status: "PENDING",
-      userId: null, // guest booking
+      // userId: null, // guest booking
       reminderSent: false,
     },
   });
@@ -191,7 +191,7 @@ async function main() {
       totalPrice: officeCleaning.price,
       notes: "Weekly office cleaning. Key is available at reception desk.",
       status: "COMPLETED",
-      userId: null,
+      // userId: null,
       reminderSent: true,
       completedAt: new Date("2024-12-10T21:00:00Z"),
     },
