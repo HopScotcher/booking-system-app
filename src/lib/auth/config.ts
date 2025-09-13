@@ -1,51 +1,52 @@
-// lib/auth.ts
-import { NextAuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcryptjs"
-import { db } from "../../../lib/db"
-import { Role, Business } from "@prisma/client"
+import { DefaultSession, NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { compare } from "bcryptjs";
+import { db } from "../../../lib/db";
+import { Role, Business, User } from "@prisma/client";
 
-// --------------------
-// Extend NextAuth types for strong typing
-// --------------------
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string
-      role: Role
-      businessId: string
-      business: Business | null
-    }
+      id: string;
+      name: string | null;
+      email: string | null;
+      role: Role;
+      businessId: string | null;
+      business: Business | null;
+    } & DefaultSession["user"];
   }
 
   interface User {
-    id: string
-    role: Role
-    businessId: string
-    business: Business | null
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: Role;
+    businessId: string | null;
+    business: Business | null;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string
-    role: Role
-    businessId: string
-    business: Business | null
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: Role;
+    businessId: string | null;
+    business: Business | null;
   }
 }
 
-// --------------------
-// Role guard helper
-// --------------------
 function canLogin(role: Role) {
-  return role === "ADMIN" || role === "STAFF"
+  return role === "ADMIN" || role === "STAFF" || role === "SUPER_ADMIN";
 }
 
-// --------------------
-// NextAuth config
-// --------------------
 export const authOptions: NextAuthOptions = {
+  pages: {
+    signIn: "/admin/login",
+    error: "/admin/login",
+  },
+
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -59,17 +60,17 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.email || !credentials?.password) return null;
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
           include: { business: true },
-        })
+        });
 
-        if (!user) return null
+        if (!user || !user.password) return null;
 
-        const isValid = await compare(credentials.password, user.password)
-        if (!isValid || !canLogin(user.role)) return null
+        const isValid = await compare(credentials.password, user.password);
+        if (!isValid || !canLogin(user.role)) return null;
 
         return {
           id: user.id,
@@ -78,34 +79,40 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           businessId: user.businessId,
           business: user.business,
-        }
+        };
       },
     }),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.name = user.name
-        token.email = user.email
-        token.role = user.role
-        token.businessId = user.businessId
-        token.business = user.business
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        return { ...token, ...session.user };
       }
-      return token
+
+      if (user) {
+        return {
+          ...token,
+          id: user.id,
+          role: user.role,
+          businessId: user.businessId,
+          business: user.business,
+        };
+      }
+      return token;
     },
 
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.role = token.role
-        session.user.businessId = token.businessId
-        session.user.business = token.business
-      }
-      return session
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id,
+          role: token.role,
+          businessId: token.businessId,
+          business: token.business,
+        },
+      };
     },
   },
-}
+};

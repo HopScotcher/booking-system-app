@@ -16,22 +16,19 @@ const customerLimiter = rateLimit({
 });
 
 const adminLimiter = rateLimit({
-  interval: 60 * 1000, // 1 minute  
+  interval: 60 * 1000, // 1 minute
   uniqueTokenPerInterval: 100,
 });
-
-
-
- 
 
 // POST - Create new booking
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting check
-    const identifier = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    const identifier =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "anonymous";
-    
+
     const { success } = await customerLimiter.check(identifier, 5);
     if (!success) {
       return NextResponse.json(
@@ -70,18 +67,18 @@ export async function POST(request: NextRequest) {
 
     // Fetch active business and its services
     const business = await db.business.findFirst({
-      where: { 
+      where: {
         isActive: true,
-        deletedAt: null 
+        deletedAt: null,
       },
       include: {
         services: {
-          where: { 
+          where: {
             isActive: true,
-            deletedAt: null 
-          }
-        }
-      }
+            deletedAt: null,
+          },
+        },
+      },
     });
 
     if (!business) {
@@ -105,7 +102,7 @@ export async function POST(request: NextRequest) {
     };
 
     const serviceName = serviceMapping[validatedData.service];
-    const service = business.services.find(s => s.name === serviceName);
+    const service = business.services.find((s) => s.name === serviceName);
 
     if (!service) {
       return NextResponse.json(
@@ -168,10 +165,9 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-
   } catch (error) {
     console.error("Booking creation error:", error);
-    
+
     // Handle Prisma-specific errors
     if (error instanceof Error) {
       if (error.message.includes("Unique constraint")) {
@@ -186,7 +182,7 @@ export async function POST(request: NextRequest) {
           { status: 409 }
         );
       }
-      
+
       if (error.message.includes("Foreign key constraint")) {
         return NextResponse.json(
           {
@@ -213,39 +209,32 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
-
+}
 
 // GET - Admin booking fetching (Phase 3)
 export async function GET(req: NextRequest) {
   try {
-    // Rate limiting for admin users
-    const identifier = 
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      "unknown";
-    
-    const { success } = await adminLimiter.check(identifier, 20);
-    
-    if (!success) {
-      return NextResponse.json(
-        { error: "Too many requests" }, 
-        { status: 429 }
-      );
-    }
-
     // Auth check
     const session = await getServerSession(authOptions);
     if (
       !session ||
-      (session.user.role !== "ADMIN" && 
-       session.user.role !== "STAFF" && 
-       session.user.role !== "SUPER_ADMIN")
+      (session.user.role !== "ADMIN" &&
+        session.user.role !== "STAFF" &&
+        session.user.role !== "SUPER_ADMIN")
     ) {
-      return NextResponse.json(
-        { error: "Unauthorized" }, 
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limiting for admin users
+    const identifier =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+
+    const { success } = await adminLimiter.check(identifier, 20);
+
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     // Query params
@@ -265,7 +254,7 @@ export async function GET(req: NextRequest) {
 
     if (status) where.status = status;
     if (serviceId) where.serviceId = serviceId;
-    
+
     if (dateFrom || dateTo) {
       where.appointmentDate = {};
       if (dateFrom) where.appointmentDate.gte = new Date(dateFrom);
@@ -291,30 +280,30 @@ export async function GET(req: NextRequest) {
         orderBy: { appointmentDate: "desc" },
         skip,
         take: limit,
-        include: { 
+        include: {
           service: {
             select: {
               id: true,
               name: true,
               price: true,
               duration: true,
-            }
-          }, 
+            },
+          },
           business: {
             select: {
               id: true,
               name: true,
               email: true,
               phone: true,
-            }
-          }, 
+            },
+          },
           user: {
             select: {
               id: true,
               name: true,
               email: true,
-            }
-          }
+            },
+          },
         },
       }),
     ]);
@@ -332,15 +321,15 @@ export async function GET(req: NextRequest) {
           totalPages,
           hasNext: page < totalPages,
           hasPrev: page > 1,
-        }
-      }
+        },
+      },
     });
   } catch (error) {
     console.error("Booking fetch error:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: "Failed to fetch bookings" 
+        error: "Failed to fetch bookings",
       },
       { status: 500 }
     );

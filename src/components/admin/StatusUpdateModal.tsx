@@ -18,10 +18,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Booking, BookingStatus } from "@prisma/client";
+import { BookingStatus, Booking } from "@prisma/client";
 import { toast } from "sonner";
 import BookingStatusBadge from "./BookingStatusBadge";
 
+interface StatusUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   booking: Booking;

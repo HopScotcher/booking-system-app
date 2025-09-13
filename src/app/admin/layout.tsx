@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+"use client";
+
 import { SessionProvider } from "next-auth/react";
 import DashboardLayout from "@/components/admin/DashboardLayout";
+import { Suspense } from "react";
 
-export const metadata: Metadata = {
-  title: "Admin | Booking System",
-  description: "Admin dashboard and management for your business.",
-};
+// export const metadata = {
+//   title: "Admin | Booking System",
+//   description: "Admin dashboard and management for your business.",
+// };
 
 export default function AdminRootLayout({
   children,
@@ -14,7 +16,9 @@ export default function AdminRootLayout({
 }) {
   return (
     <SessionProvider>
-      <DashboardLayout>{children}</DashboardLayout>
+      <Suspense fallback={<div>Loading...</div>}>
+        <DashboardLayout>{children}</DashboardLayout>
+      </Suspense>
     </SessionProvider>
   );
 }
