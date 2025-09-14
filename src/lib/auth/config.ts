@@ -4,36 +4,42 @@ import { compare } from "bcryptjs";
 import { db } from "../../../lib/db";
 import { Role, Business, User } from "@prisma/client";
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string | null;
-      email: string | null;
-      role: Role;
-      businessId: string | null;
-      business: Business | null;
-    } & DefaultSession["user"];
-  }
+// Type declarations moved below
 
+declare module "next-auth" {
   interface User {
     id: string;
-    name: string | null;
-    email: string | null;
+    name: string;
+    email: string;
     role: Role;
-    businessId: string | null;
-    business: Business | null;
+    businessId: string;
+    business: {
+      // Define only the properties you need in the session
+      id: string;
+      name: string;
+      email: string;
+      isActive: boolean;
+    };
+  }
+
+  interface Session extends DefaultSession {
+    user: User;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    name: string | null;
-    email: string | null;
+    name: string;
+    email: string;
     role: Role;
-    businessId: string | null;
-    business: Business | null;
+    businessId: string;
+    business: {
+      id: string;
+      name: string;
+      email: string;
+      isActive: boolean;
+    };
   }
 }
 
@@ -42,6 +48,8 @@ function canLogin(role: Role) {
 }
 
 export const authOptions: NextAuthOptions = {
+  debug: process.env.NODE_ENV === "development",
+
   pages: {
     signIn: "/admin/login",
     error: "/admin/login",
@@ -60,26 +68,83 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[Auth] Missing credentials");
+          return null;
+        }
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email },
-          include: { business: true },
-        });
+        try {
+          console.log("[Auth] Attempting to find user:", credentials.email);
 
-        if (!user || !user.password) return null;
+          const user = await db.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+            include: {
+              business: true,
+            },
+          });
 
-        const isValid = await compare(credentials.password, user.password);
-        if (!isValid || !canLogin(user.role)) return null;
+          if (!user) {
+            console.log("[Auth] User not found");
+            return null;
+          }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          businessId: user.businessId,
-          business: user.business,
-        };
+          if (!user.isActive) {
+            console.log("[Auth] User is not active");
+            return null;
+          }
+
+          if (user.deletedAt) {
+            console.log("[Auth] User has been deleted");
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("[Auth] No password set for user");
+            return null;
+          }
+
+          console.log("[Auth] Verifying password...");
+          const isValidPassword = await compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isValidPassword) {
+            console.log("[Auth] Invalid password");
+            return null;
+          }
+
+          if (!canLogin(user.role)) {
+            console.log("[Auth] User role not allowed:", user.role);
+            return null;
+          }
+
+          if (!user.business?.isActive) {
+            console.log("[Auth] Business is not active");
+            return null;
+          }
+
+          console.log("[Auth] Login successful for:", user.email);
+
+          return {
+            id: user.id,
+            name: user.name || "",
+            email: user.email,
+            role: user.role,
+            businessId: user.businessId,
+            business: {
+              id: user.business.id,
+              name: user.business.name,
+              email: user.business.email,
+              isActive: user.business.isActive,
+            },
+          };
+        } catch (error) {
+          console.error("Error in authorize:", error);
+          return null;
+        }
       },
     }),
   ],

@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform duration from minutes to hours
-    const servicesWithHours = services.map(service => ({
+    const servicesWithHours = services.map((service) => ({
       ...service,
-      duration: service.duration / 60  // Convert minutes to hours
+      duration: service.duration / 60, // Convert minutes to hours
     }));
 
     return NextResponse.json({
