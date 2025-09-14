@@ -6,6 +6,8 @@ import * as z from "zod";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { EyeIcon } from "lucide-react";
+import { EyeOff } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -20,6 +22,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -36,11 +39,16 @@ export default function LoginForm() {
       redirect: false,
     });
     setLoading(false);
+    console.log(res)
+
     if (res?.error) {
+      // Show more detailed error messages during development
       setError(
-        res.error === "CredentialsSignin"
-          ? "Invalid email or password"
-          : res.error
+        process.env.NODE_ENV === "development" 
+          ? res.error
+          : res.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : "Authentication failed"
       );
     } else if (res?.ok) {
       router.push("/dashboard");
@@ -54,11 +62,11 @@ export default function LoginForm() {
         className="w-full max-w-md space-y-6 rounded-lg bg-white p-8 shadow-lg"
       >
         <div className="mb-6 text-center">
-          <img
+          {/* <img
             src="/logo.svg"
             alt="Company Logo"
             className="mx-auto h-12 w-12"
-          />
+          /> */}
           <h2 className="mt-2 text-2xl font-bold text-gray-900">
             Business Login
           </h2>
@@ -82,13 +90,26 @@ export default function LoginForm() {
           <label className="block text-sm font-medium text-gray-700">
             Password
           </label>
-          <input
-            type="password"
-            autoComplete="current-password"
-            {...register("password")}
-            className={`mt-1 w-full rounded border px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.password ? "border-red-500" : "border-gray-300"}`}
-            disabled={loading}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              {...register("password")}
+              className={`mt-1 w-full rounded border px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.password ? "border-red-500" : "border-gray-300"}`}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+            >
+              {showPassword ? (
+                <EyeIcon/>
+              ) : (
+                <EyeOff/>
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="mt-1 text-xs text-red-600">
               {errors.password.message}
