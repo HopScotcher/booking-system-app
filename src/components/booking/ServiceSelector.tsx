@@ -1,36 +1,59 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { SERVICES, type ServiceConfig } from "@/lib/data/services"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Service } from "@prisma/client";
+import { useServices } from "@/hooks/useServices";
+// import { Skeleton } from "@/components/ui/skeleton";
 
 export interface ServiceSelectorProps {
-  services?: readonly ServiceConfig[]
-  value?: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" | null
-  defaultValue?: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" | null
-  onChange?: (serviceId: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING") => void
-  className?: string
+  value?: string | null;
+  defaultValue?: string | null;
+  onChange?: (serviceId: string) => void;
+  className?: string;
 }
 
 export function ServiceSelector({
-  services = SERVICES,
   value,
   defaultValue = null,
   onChange,
   className,
 }: ServiceSelectorProps) {
-  const isControlled = value !== undefined
-  const [internalValue, setInternalValue] = React.useState<"BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" | null>(
-    defaultValue,
-  )
+  const { data: servicesData, isLoading, error } = useServices();
+  const services = servicesData?.data ?? [];
 
-  const selectedId = isControlled ? value ?? null : internalValue
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = React.useState<string | null>(
+    defaultValue
+  );
+  const selectedId = isControlled ? (value ?? null) : internalValue;
 
-  const handleSelect = (id: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING") => {
+  const handleSelect = (id: string) => {
     if (!isControlled) {
-      setInternalValue(id)
+      setInternalValue(id);
     }
-    onChange?.(id)
+    onChange?.(id);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-32 rounded-lg border bg-muted animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-destructive bg-destructive/10 rounded-lg">
+        Failed to load services
+      </div>
+    );
   }
 
   return (
@@ -38,11 +61,11 @@ export function ServiceSelector({
       role="radiogroup"
       className={cn(
         "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
-        className,
+        className
       )}
     >
       {services.map((service) => {
-        const isSelected = service.id === selectedId
+        const isSelected = service.id === selectedId;
         return (
           <button
             key={service.id}
@@ -53,9 +76,7 @@ export function ServiceSelector({
             className={cn(
               "text-left rounded-lg border bg-background p-4 transition",
               "hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              isSelected
-                ? "border-2 border-primary shadow-sm"
-                : "border-border",
+              isSelected ? "border-2 border-primary shadow-sm" : "border-border"
             )}
           >
             <div className="flex items-start justify-between gap-3">
@@ -73,7 +94,7 @@ export function ServiceSelector({
                   "mt-1 h-4 w-4 rounded-full border",
                   isSelected
                     ? "border-primary bg-primary"
-                    : "border-muted-foreground/30",
+                    : "border-muted-foreground/30"
                 )}
               />
             </div>
@@ -81,19 +102,17 @@ export function ServiceSelector({
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="font-medium">
                 ${""}
-                {service.basePrice.toFixed(0)}
+                {service.price.toFixed(0)}
               </span>
               <span className="text-muted-foreground">
                 {service.duration} hr{service.duration > 1 ? "s" : ""}
               </span>
             </div>
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
-export default ServiceSelector
-
-
+export default ServiceSelector;

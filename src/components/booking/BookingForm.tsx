@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useServices } from "@/hooks/useServices";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -29,19 +30,19 @@ const STEPS = [
 ] as const;
 
 export interface BookingFormProps {
-  // onSubmit: (data: BookingInput) => Promise<void>;
   className?: string;
 }
 
 export function BookingForm({ className }: BookingFormProps) {
   const [currentStep, setCurrentStep] = React.useState<Step>(1);
+  const { data: servicesData } = useServices();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const createBooking = useCreateBooking();
   const router = useRouter();
 
   const [formData, setFormData] = useState<BookingFormData>({
-    service: "BASIC_CLEANING",
+    service: "",
     date: null,
     time: null,
     customerName: "",
@@ -67,7 +68,7 @@ export function BookingForm({ className }: BookingFormProps) {
       appointmentDateTime.setHours(hours, minutes, 0, 0);
 
       // Prepare data for validation and API
-      const bookingData: BookingInput = {
+      const bookingData: BookingFormData = {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
@@ -147,9 +148,7 @@ export function BookingForm({ className }: BookingFormProps) {
     }
   };
 
-  const handleServiceSelect = (
-    serviceId: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING"
-  ) => {
+  const handleServiceSelect = (serviceId: string) => {
     updateFormData({ service: serviceId });
   };
 
@@ -172,123 +171,8 @@ export function BookingForm({ className }: BookingFormProps) {
     handleNext();
   };
 
-  //   const handleFinalSubmit = async () => {
-  //   if (!formData.service || !formData.date || !formData.time) {
-  //     setError("Please complete all required fields");
-  //     return;
-  //   }
-
-  //   try {
-  //     setIsLoading(true);
-  //     setError(null);
-
-  //     // Combine date and time into a single DateTime
-  //     const appointmentDateTime = new Date(formData.date);
-  //     const [hours, minutes] = formData.time.split(":").map(Number);
-  //     appointmentDateTime.setHours(hours, minutes, 0, 0);
-
-  //     const bookingData: BookingInput = {
-  //       customerName: formData.customerName,
-  //       customerEmail: formData.customerEmail,
-  //       customerPhone: formData.customerPhone,
-  //       service: formData.service,
-  //       date: appointmentDateTime,
-  //       time: formData.time,
-  //       address: formData.address,
-  //       notes: formData.notes,
-  //     };
-
-  //     // Validate with Zod schema
-  //     const validatedData = bookingSchema.parse(bookingData);
-
-  //     // Send to API endpoint
-  //     const res = await fetch("/api/bookings", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(validatedData),
-  //     });
-
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       throw new Error(errorData?.error?.message || "Failed to create booking");
-  //     }
-
-  //     const data = await res.json();
-
-  //     alert(`Booking created! Confirmation code: ${data.data.confirmationCode}`);
-  //   } catch (err) {
-  //     if (err instanceof Error) {
-  //       setError(err.message);
-  //     } else {
-  //       setError("An unexpected error occurred");
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  //  const handleFinalSubmit = async () => {
-
-  //       if (!formData.service || !formData.date || !formData.time) {
-  //         setError("Please complete all required fields");
-  //         return;
-  //       }
-
-  //       try {
-  //         setIsLoading(true);
-  //         setError(null);
-
-  //         // Combine date and time into a single DateTime
-  //         const appointmentDateTime = new Date(formData.date);
-  //         const [hours, minutes] = formData.time.split(":").map(Number);
-  //         appointmentDateTime.setHours(hours, minutes, 0, 0);
-
-  //         const bookingData: BookingInput = {
-  //           customerName: formData.customerName,
-  //           customerEmail: formData.customerEmail,
-  //           customerPhone: formData.customerPhone,
-  //           service: formData.service,
-  //           date: appointmentDateTime,
-  //           time: formData.time,
-  //           address: formData.address,
-  //           notes: formData.notes,
-  //         };
-
-  //         // Validate with Zod schema
-  //         const validatedData = bookingSchema.parse(bookingData);
-  //         console.log(`booking form: ${{...validatedData}}`)
-
-  //         createBooking.mutate(validatedData, {
-  //           onSuccess: (res) => {
-  //             alert(`Booking created! Confirmation code: ${res.data.data.confirmationCode}`);
-  //              toast.success('Booking Created!', {
-  //             description: `Confirmation code: ${res.data.data.confirmationCode}`,
-  //           })
-  //           },
-  //           onError: (err: any) => {
-  //             setError(err?.response?.data?.error?.message || "Failed to create booking");
-  //             toast.error("Error creating booking",{
-  //               description: `${err?.response?.data?.error?.message}`
-  //             })
-  //           },
-  //         });
-  //       }
-
-  //       catch (err) {
-  //         if (err instanceof Error) {
-  //           setError(err.message);
-  //         } else {
-  //           setError("An unexpected error occurred");
-  //         }
-  //       } finally {
-  //         setIsLoading(false);
-  //       }
-  //     };
-
   const getSelectedService = () => {
-    return SERVICES.find((s) => s.id === formData.service);
+    return servicesData?.data?.find((s) => s.id === formData.service);
   };
 
   const renderStepContent = () => {
@@ -341,8 +225,8 @@ export function BookingForm({ className }: BookingFormProps) {
                       {selectedService?.name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      ${selectedService?.basePrice} •{" "}
-                      {selectedService?.duration} hours
+                      ${selectedService?.price} • {selectedService?.duration}{" "}
+                      hours
                     </p>
                   </div>
                   <div>

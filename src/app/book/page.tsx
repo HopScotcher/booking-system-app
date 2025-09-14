@@ -39,7 +39,7 @@ export default function BookPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  SparkleClean
+                  Dorshee House Cleaning Services
                 </h1>
                 <p className="text-sm text-gray-500">
                   Professional Cleaning Services
