@@ -94,15 +94,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Map service enum to actual service
-    const serviceMapping: Record<string, string> = {
-      BASIC_CLEANING: "Basic House Cleaning",
-      DEEP_CLEANING: "Deep Cleaning Service",
-      MOVE_IN_OUT_CLEANING: "Move-in/Move-out Cleaning",
-    };
-
-    const serviceName = serviceMapping[validatedData.service];
-    const service = business.services.find((s) => s.name === serviceName);
+    // Find the selected service by ID
+    const service = business.services.find(
+      (s) => s.id === validatedData.service
+    );
 
     if (!service) {
       return NextResponse.json(
@@ -297,13 +292,13 @@ export async function GET(req: NextRequest) {
               phone: true,
             },
           },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
+          // user: {
+          //   select: {
+          //     id: true,
+          //     name: true,
+          //     email: true,
+          //   },
+          // },
         },
       }),
     ]);
