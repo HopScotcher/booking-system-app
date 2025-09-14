@@ -84,6 +84,8 @@ export function BookingForm({ className }: BookingFormProps) {
       // Validate with Zod schema
       const validatedData = bookingSchema.parse(bookingData);
 
+      console.log(`Validated data bookingform: ${validatedData}`)
+
       // Send to API endpoint
       const res = await fetch("/api/bookings", {
         method: "POST",

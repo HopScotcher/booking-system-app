@@ -38,6 +38,18 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Define which paths need protection
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    // Match all admin routes
+    "/admin/:path*",
+    // Exclude api/services and api/bookings POST from protection
+    {
+      source: "/api/:path*",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
+  ],
 };
