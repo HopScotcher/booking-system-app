@@ -1,14 +1,7 @@
 import { z } from "zod"
 
-// Predefined service enum for booking validation
-export const SERVICE_VALUES = [
-  "BASIC_CLEANING",
-  "DEEP_CLEANING",
-  "MOVE_IN_OUT_CLEANING",
-] as const
-
-export const ServiceTypeEnum = z.enum(SERVICE_VALUES)
-export type ServiceType = z.infer<typeof ServiceTypeEnum>
+// Service validation
+export const ServiceIdSchema = z.string().cuid("Invalid service ID")
 
 const phoneRegex = /^\+?[0-9\s\-().]{7,20}$/
 const time24hRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -27,7 +20,7 @@ export const bookingSchema = z.object({
     .string()
     .min(1, "Phone number is required")
     .regex(phoneRegex, "Please enter a valid phone number"),
-  service: ServiceTypeEnum,
+  service: ServiceIdSchema,
   date: z
     .coerce.date()
     .refine((d) => d.getTime() > Date.now(), "Date must be in the future"),

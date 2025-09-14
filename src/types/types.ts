@@ -107,7 +107,7 @@ export interface BookingData {
   }
 
   export interface BookingFormData {
-  service: "BASIC_CLEANING" | "DEEP_CLEANING" | "MOVE_IN_OUT_CLEANING" ;
+  service: string | null;
   date: Date | null;
   time: string | null;
   customerName: string;
