@@ -3,6 +3,9 @@ import { db } from "../../../../lib/db";
 import { BookingStatus } from "@prisma/client";
 import { Suspense } from "react";
 import Link from "next/link";
+import { createClient } from "../../../../lib/supabase/server";
+// import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Dashboard | Admin",
@@ -29,17 +32,57 @@ function StatCard({
 }
 
 export default async function DashboardPage() {
-  // Fetch stats
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data?.user) {
+    redirect("/admin/login");
+  }
+
+  // Get the business ID from the user's metadata
+  const businessId = data.user.user_metadata.businessId;
+
+  console.log('admin/dashboard, businessId: ',businessId)
+
+  if (!businessId) {
+    throw new Error("No business associated with this account");
+  }
+
+  // Fetch stats with business filtering
   const [total, pending, confirmed, revenue, recent] = await Promise.all([
-    db.booking.count({ where: { deletedAt: null } }),
-    db.booking.count({ where: { status: "PENDING", deletedAt: null } }),
-    db.booking.count({ where: { status: "CONFIRMED", deletedAt: null } }),
+    db.booking.count({
+      where: {
+        businessId,
+        deletedAt: null,
+      },
+    }),
+    db.booking.count({
+      where: {
+        businessId,
+        status: "PENDING",
+        deletedAt: null,
+      },
+    }),
+    db.booking.count({
+      where: {
+        businessId,
+        status: "CONFIRMED",
+        deletedAt: null,
+      },
+    }),
     db.booking.aggregate({
       _sum: { totalPrice: true },
-      where: { status: "COMPLETED", deletedAt: null },
+      where: {
+        businessId,
+        status: "COMPLETED",
+        deletedAt: null,
+      },
     }),
     db.booking.findMany({
-      where: { deletedAt: null },
+      where: {
+        businessId,
+        deletedAt: null,
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {
@@ -58,9 +101,19 @@ export default async function DashboardPage() {
   const weekAgo = new Date();
   weekAgo.setDate(today.getDate() - 7);
   const [todayCount, weekCount] = await Promise.all([
-    db.booking.count({ where: { createdAt: { gte: today }, deletedAt: null } }),
     db.booking.count({
-      where: { createdAt: { gte: weekAgo }, deletedAt: null },
+      where: {
+        businessId,
+        createdAt: { gte: today },
+        deletedAt: null,
+      },
+    }),
+    db.booking.count({
+      where: {
+        businessId,
+        createdAt: { gte: weekAgo },
+        deletedAt: null,
+      },
     }),
   ]);
 
