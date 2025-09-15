@@ -1,4 +1,7 @@
+//app/admin/login/page.tsx
+
 import { login, signup } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   return (
@@ -7,14 +10,11 @@ export default function LoginPage() {
       <input id="email" name="email" type="email" required />
       <label htmlFor="password">Password:</label>
       <input id="password" name="password" type="password" required />
-      <button formAction={login}>Log in</button>
-      <button formAction={signup}>Sign up</button>
+      <Button formAction={login}>Log in</Button>
+      <Button formAction={signup}>Sign up</Button>
     </form>
   );
 }
-
-
-
 
 // import { Metadata } from "next";
 // import { getServerSession } from "next-auth";
