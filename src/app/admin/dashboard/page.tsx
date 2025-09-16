@@ -39,6 +39,8 @@ export default async function DashboardPage() {
     redirect("/admin/login");
   }
 
+  console.log(data?.user.email)
+
   // Get the business ID from the user's metadata
   const businessId = data.user.user_metadata.businessId;
 
@@ -198,3 +200,4 @@ export default async function DashboardPage() {
     </main>
   );
 }
+

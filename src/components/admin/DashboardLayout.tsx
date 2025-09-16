@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 const navItems = [
-  { name: "Dashboard", href: "/admin" },
+  { name: "Dashboard", href: "/admin/dashboard" },
   { name: "Bookings", href: "/admin/bookings" },
   { name: "Settings", href: "/admin/settings" },
 ];
@@ -21,9 +21,10 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Top Nav */}
+      {/* Header */}
       <header className="flex h-16 items-center justify-between bg-white px-4 shadow-sm">
         <div className="flex items-center gap-2">
+          {/* Mobile Menu Button */}
           <button
             className="md:hidden"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -43,14 +44,30 @@ export default function DashboardLayout({
               />
             </svg>
           </button>
+          {/* Logo */}
           <Link
             href="/admin"
             className="flex items-center gap-2 text-xl font-bold text-blue-700"
           >
             <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
-            Booking Admin
+            <span className="hidden md:inline">Booking Admin</span>
           </Link>
         </div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center justify-center flex-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className="mx-4 rounded px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* User Info & Logout */}
         <div className="flex items-center gap-4">
           <div className="hidden md:block text-right">
             <div className="font-semibold text-gray-900">{user?.name}</div>
@@ -64,34 +81,40 @@ export default function DashboardLayout({
           </button>
         </div>
       </header>
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-30 w-56 transform bg-white shadow-lg transition-transform duration-200 md:static md:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+
+      {/* Mobile Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-white shadow-lg transition-transform duration-200 md:hidden ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <nav className="mt-8 flex flex-col gap-2 px-4">
+        <div className="flex h-16 items-center justify-center border-b">
+          <span className="text-xl font-bold text-blue-700">Menu</span>
+        </div>
+        <nav className="flex flex-col p-4">
           {navItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="rounded px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+              className="mb-2 rounded px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
               onClick={() => setSidebarOpen(false)}
             >
               {item.name}
             </Link>
           ))}
         </nav>
-      </aside>
-      {/* Overlay for mobile sidebar */}
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/30 md:hidden"
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
       {/* Main Content */}
-      <main className="md:ml-56 p-4 pt-8 transition-all duration-200">
+      <main className="p-4 pt-8">
         {children}
       </main>
     </div>
