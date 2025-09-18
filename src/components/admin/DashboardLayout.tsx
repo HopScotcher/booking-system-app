@@ -1,8 +1,11 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import { getUserSession } from "@/app/(auth)/login/actions";
 import Link from "next/link";
 import { useState } from "react";
+// import { User } from "@prisma/client";
+import { User } from "@supabase/supabase-js";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },
@@ -10,14 +13,18 @@ const navItems = [
   { name: "Settings", href: "/admin/settings" },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
+
+interface DashboardLayoutProps{
   children: React.ReactNode;
-}) {
-  const { data: session } = useSession();
+  user: User
+}
+export default async function DashboardLayout({
+  children, user
+}: DashboardLayoutProps) {
+  // const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const user = session?.user;
+  // const user = session?.user;
+  const response = await getUserSession()
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -70,8 +77,8 @@ export default function DashboardLayout({
         {/* User Info & Logout */}
         <div className="flex items-center gap-4">
           <div className="hidden md:block text-right">
-            <div className="font-semibold text-gray-900">{user?.name}</div>
-            <div className="text-xs text-gray-500">{user?.role}</div>
+            <div className="font-semibold text-gray-900">{response?.user?.email}</div>
+            <div className="text-xs text-gray-500">{response?.user?.role}</div>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/admin/login" })}

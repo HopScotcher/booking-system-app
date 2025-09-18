@@ -20,8 +20,8 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    console.error("Login error:", error.message);
-    redirect("/admin/error");
+    console.log("Login error:", error.code);
+    redirect("/error");
   }
 
   // TODO: this might cause an error (the single() method)
@@ -40,10 +40,10 @@ export async function login(formData: FormData) {
   }
 
   // Get the callback URL from the form data or default to dashboard
-  const callbackUrl = formData.get("callbackUrl") as string;
+  // const callbackUrl = formData.get("callbackUrl") as string;
 
-  revalidatePath("/admin", "layout");
-  redirect(callbackUrl || "/admin/dashboard");
+  // revalidatePath("/admin", "layout");
+  redirect("/admin/dashboard");
 }
 
 
@@ -100,5 +100,5 @@ export async function getUserSession(){
     return null
   }
 
-  return {status: "success", user: data.session?.user}
+  return {status: "success", user: data?.user}
 }

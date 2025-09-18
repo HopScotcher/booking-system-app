@@ -16,7 +16,9 @@ export default async function LoginPage({
 
   if (user) {
     // If already logged in, redirect to callback URL or dashboard
-    redirect(searchParams.callbackUrl || "/admin/dashboard");
+
+    // TODO: add callback url as the first option
+    redirect( "/admin/dashboard");
   }
 
   return (
