@@ -2,12 +2,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
+// import { authOptions } from "@/lib/auth/config";
 import { db } from "../../../../lib/db";
 import { z } from "zod";
 import { bookingSchema } from "@/lib/validations/booking";
 import { rateLimit } from "@/lib/rate-limit";
 import { BookingStatus, Service } from "@prisma/client";
+import { getUserSession } from "@/app/(auth)/login/actions";
 
 // Rate limiters for different endpoints
 const customerLimiter = rateLimit({
@@ -210,15 +211,15 @@ export async function POST(request: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // Auth check
-    const session = await getServerSession(authOptions);
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "STAFF" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+     
+    const response = await getUserSession()
+
+    if(!response?.user|| (response.user.role !== "ADMIN" &&
+        response.user.role !== "STAFF" &&
+        response.user.role !== "SUPER_ADMIN")){
+          return NextResponse.json({error: "Unauthorized", code: 401})
+        }
+
 
     // Rate limiting for admin users
     const identifier =

@@ -1,8 +1,9 @@
 // app/api/boookings/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth/config";
+import { getUserSession } from "@/app/(auth)/login/actions";
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "../../../../lib/auth/config";
 import { db } from "../../../../../lib/db";
 import { BookingStatus } from "@prisma/client";
 
@@ -12,6 +13,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+
+     const response = await getUserSession()
+    
+      if(!response?.user){
+        return NextResponse.json({error: 'Unauthorized'})
+      }
+
     const { id } = params;
     if (!id) {
       return NextResponse.json(
@@ -81,7 +89,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getUserSession();
     if (
       !session ||
       (session.user.role !== "ADMIN" &&

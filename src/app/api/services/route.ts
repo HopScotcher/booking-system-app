@@ -1,10 +1,17 @@
 // src/app/api/services/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "@/lib/auth/config";
 import { db } from "../../../../lib/db";
+import { getUserSession } from "@/app/(auth)/login/actions";
 
 export async function GET(request: NextRequest) {
+
+  const response = await getUserSession()
+
+  if(!response?.user){
+    return NextResponse.json({error: 'Unauthorized'})
+  }
   try {
     // For now, return all active services without business filtering
     const services = await db.service.findMany({

@@ -1,7 +1,9 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { getUserSession } from "@/app/(auth)/login/actions";
+ 
+// import { getUserSession } from "@/app/(auth)/login/actions";
+
+import { SignOut } from "@/app/(auth)/login/actions";
 import Link from "next/link";
 import { useState } from "react";
 // import { User } from "@prisma/client";
@@ -18,13 +20,13 @@ interface DashboardLayoutProps{
   children: React.ReactNode;
   user: User
 }
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children, user
 }: DashboardLayoutProps) {
   // const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // const user = session?.user;
-  const response = await getUserSession()
+   
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -77,11 +79,11 @@ export default async function DashboardLayout({
         {/* User Info & Logout */}
         <div className="flex items-center gap-4">
           <div className="hidden md:block text-right">
-            <div className="font-semibold text-gray-900">{response?.user?.email}</div>
-            <div className="text-xs text-gray-500">{response?.user?.role}</div>
+            <div className="font-semibold text-gray-900">{ user?.email}</div>
+            <div className="text-xs text-gray-500">{ user?.role}</div>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={() => SignOut()}
             className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
           >
             Logout
