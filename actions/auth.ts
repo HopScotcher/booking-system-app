@@ -3,8 +3,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
- 
-
 import { createClient } from "../lib/supabase/server";
 import { syncUserAfterSignup, validateUserSync } from "../lib/auth-sync";
 import { db } from "../lib/db";
@@ -29,7 +27,7 @@ export async function login(formData: FormData) {
   
   if (!syncStatus.synced) {
     console.error('User sync issue:', syncStatus.reason)
-    redirect(`/error?reason=${encodeURIComponent(syncStatus.reason)}`)
+    redirect(`/error?reason=${encodeURIComponent(`${syncStatus.reason}`)}`)
   }
 
   // TODO: this might cause an error (the single() method)

@@ -8,7 +8,8 @@ import { z } from "zod";
 import { bookingSchema } from "@/lib/validations/booking";
 import { rateLimit } from "@/lib/rate-limit";
 import { BookingStatus, Service } from "@prisma/client";
-import { getUserSession } from "@/app/(auth)/login/actions";
+import { getUserSession } from "../../../../actions/auth";
+import { getCurrentUserBusiness } from "../../../../lib/business";
 
 // Rate limiters for different endpoints
 const customerLimiter = rateLimit({
@@ -20,6 +21,8 @@ const adminLimiter = rateLimit({
   interval: 60 * 1000, // 1 minute
   uniqueTokenPerInterval: 100,
 });
+
+// TODO: IMPLEMENT THE MULTI-TENANCY APPROACH FOR BUSINESS FETCHING TO THIS ROUTE
 
 // POST - Create new booking
 export async function POST(request: NextRequest) {
@@ -211,15 +214,17 @@ export async function POST(request: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // Auth check
-     
-    const response = await getUserSession()
 
-    if(!response?.user|| (response.user.role !== "ADMIN" &&
+    const response = await getUserSession();
+
+    if (
+      !response?.user ||
+      (response.user.role !== "ADMIN" &&
         response.user.role !== "STAFF" &&
-        response.user.role !== "SUPER_ADMIN")){
-          return NextResponse.json({error: "Unauthorized", code: 401})
-        }
-
+        response.user.role !== "SUPER_ADMIN")
+    ) {
+      return NextResponse.json({ error: "Unauthorized", code: 401 });
+    }
 
     // Rate limiting for admin users
     const identifier =

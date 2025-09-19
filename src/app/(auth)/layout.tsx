@@ -1,5 +1,6 @@
 import next from "next";
-import { getUserSession } from "./login/actions";
+// import { getUserSession } from "./login/actions";
+import { getUserSession } from "../../../actions/auth";
 import { redirect } from "next/navigation";
 
 export default async function AuthLayout({

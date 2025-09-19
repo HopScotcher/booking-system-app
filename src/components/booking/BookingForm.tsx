@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useServices } from "@/hooks/useServices";
+import { Booking, Business, Service } from "@prisma/client";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -31,17 +32,24 @@ const STEPS = [
 
 export interface BookingFormProps {
   className?: string;
+  business: Business;
+  services: Service[];
 }
 
-export function BookingForm({ className }: BookingFormProps) {
+export function BookingForm({
+  className,
+  business,
+  services,
+}: BookingFormProps) {
   const [currentStep, setCurrentStep] = React.useState<Step>(1);
-  const { data: servicesData } = useServices();
+  // const { data: servicesData } = useServices();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const createBooking = useCreateBooking();
   const router = useRouter();
 
   const [formData, setFormData] = useState<BookingFormData>({
+    businessId: "",
     service: "",
     date: null,
     time: null,
@@ -68,7 +76,8 @@ export function BookingForm({ className }: BookingFormProps) {
       appointmentDateTime.setHours(hours, minutes, 0, 0);
 
       // Prepare data for validation and API
-      const bookingData: BookingFormData = {
+      const bookingData: BookingFormData & { businessId: string } = {
+        businessId: business.id,
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
@@ -76,7 +85,7 @@ export function BookingForm({ className }: BookingFormProps) {
         date: appointmentDateTime,
         time: formData.time,
         address: formData.address,
-        notes: formData.notes,
+        notes: `${formData.notes}`,
       };
 
       console.log(`BookingForm.tsx: ${bookingData}`);
@@ -84,7 +93,7 @@ export function BookingForm({ className }: BookingFormProps) {
       // Validate with Zod schema
       const validatedData = bookingSchema.parse(bookingData);
 
-      console.log(`Validated data bookingform: ${validatedData}`)
+      console.log(`Validated data bookingform: ${validatedData}`);
 
       // Send to API endpoint
       const res = await fetch("/api/bookings", {
@@ -174,7 +183,8 @@ export function BookingForm({ className }: BookingFormProps) {
   };
 
   const getSelectedService = () => {
-    return servicesData?.data?.find((s) => s.id === formData.service);
+    // return servicesData?.data?.find((s) => s.id === formData.service);
+    return services.find((s) => s.id === formData.service);
   };
 
   const renderStepContent = () => {
@@ -184,6 +194,7 @@ export function BookingForm({ className }: BookingFormProps) {
           <ServiceSelector
             value={formData.service}
             onChange={handleServiceSelect}
+            services={services}
           />
         );
 

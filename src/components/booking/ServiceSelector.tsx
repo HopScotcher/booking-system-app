@@ -1,16 +1,14 @@
 "use client";
-
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Service } from "@prisma/client";
-import { useServices } from "@/hooks/useServices";
-// import { Skeleton } from "@/components/ui/skeleton";
 
 export interface ServiceSelectorProps {
   value?: string | null;
   defaultValue?: string | null;
   onChange?: (serviceId: string) => void;
   className?: string;
+  services: Service[]; // FIXED: Should be array, not single Service
 }
 
 export function ServiceSelector({
@@ -18,14 +16,13 @@ export function ServiceSelector({
   defaultValue = null,
   onChange,
   className,
+  services
 }: ServiceSelectorProps) {
-  const { data: servicesData, isLoading, error } = useServices();
-  const services = servicesData?.data ?? [];
-
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = React.useState<string | null>(
     defaultValue
   );
+  
   const selectedId = isControlled ? (value ?? null) : internalValue;
 
   const handleSelect = (id: string) => {
@@ -35,23 +32,25 @@ export function ServiceSelector({
     onChange?.(id);
   };
 
-  if (isLoading) {
+  // Handle missing or empty services
+  if (!services) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-32 rounded-lg border bg-muted animate-pulse"
-          />
-        ))}
+      <div className="p-6 text-center">
+        <div className="text-destructive bg-destructive/10 rounded-lg p-4">
+          <h3 className="font-semibold">Services Unavailable</h3>
+          <p className="text-sm mt-1">Unable to load services. Please try again later.</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (services.length === 0) {
     return (
-      <div className="p-4 text-destructive bg-destructive/10 rounded-lg">
-        Failed to load services
+      <div className="p-6 text-center">
+        <div className="text-muted-foreground bg-muted/50 rounded-lg p-4">
+          <h3 className="font-semibold">No Services Available</h3>
+          <p className="text-sm mt-1">This business hasn't added any services yet.</p>
+        </div>
       </div>
     );
   }
@@ -84,9 +83,11 @@ export function ServiceSelector({
                 <h3 className="text-base font-semibold leading-6">
                   {service.name}
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {service.description}
-                </p>
+                {service.description && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {service.description}
+                  </p>
+                )}
               </div>
               <div
                 aria-hidden
@@ -98,14 +99,16 @@ export function ServiceSelector({
                 )}
               />
             </div>
-
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="font-medium">
-                ${""}
-                {service.price.toFixed(0)}
+                ${service.price.toFixed(0)}
               </span>
               <span className="text-muted-foreground">
-                {service.duration} hr{service.duration > 1 ? "s" : ""}
+                {/* Convert minutes to hours if needed */}
+                {service.duration >= 60 
+                  ? `${(service.duration / 60).toFixed(1)} hr${service.duration > 60 ? "s" : ""}`
+                  : `${service.duration} min`
+                }
               </span>
             </div>
           </button>

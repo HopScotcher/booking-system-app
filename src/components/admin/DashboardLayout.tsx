@@ -3,7 +3,8 @@
  
 // import { getUserSession } from "@/app/(auth)/login/actions";
 
-import { SignOut } from "@/app/(auth)/login/actions";
+ 
+import { signOut } from "../../../actions/auth";
 import Link from "next/link";
 import { useState } from "react";
 // import { User } from "@prisma/client";
@@ -83,7 +84,7 @@ export default function DashboardLayout({
             <div className="text-xs text-gray-500">{ user?.role}</div>
           </div>
           <button
-            onClick={() => SignOut()}
+            onClick={() => signOut()}
             className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
           >
             Logout
