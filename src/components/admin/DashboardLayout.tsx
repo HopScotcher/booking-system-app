@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useState } from "react";
 // import { User } from "@prisma/client";
 import { User } from "@supabase/supabase-js";
+import { UserRound } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },
@@ -59,7 +60,8 @@ export default function DashboardLayout({
             href="/admin"
             className="flex items-center gap-2 text-xl font-bold text-blue-700"
           >
-            <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+            <UserRound/>
+         
             <span className="hidden md:inline">Booking Admin</span>
           </Link>
         </div>

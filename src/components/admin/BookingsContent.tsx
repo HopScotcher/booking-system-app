@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Booking, Service } from "@prisma/client";
 import BookingFilters from "./BookingFilters";
 import BookingsTable from "./BookingsTable";
 
 export function BookingsContent() {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,15 +55,17 @@ export function BookingsContent() {
     }
   };
 
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
+    fetchData();
 
-  if (!session) {
-    return null; // Middleware will handle the redirect
-  }
+  // useEffect(() => {
+  //   if (session) {
+    
+  //   }
+  // }, [session]);
+
+  // if (!session) {
+  //   return null; // Middleware will handle the redirect
+  // }
 
   if (isLoading) {
     return <div>Loading...</div>;

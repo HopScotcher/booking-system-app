@@ -39,48 +39,135 @@ export default async function DashboardPage() {
     redirect("/admin/login");
   }
 
-  console.log(data?.user.email)
+  console.log(data?.user.email);
 
-  // Get the business ID from the user's metadata
-  const businessId = data.user;
+  // Get business info from YOUR database, not Supabase metadata
+  const user = await db.user.findUnique({
+    where: { email: data.user.email! },
+    include: { business: true },
+  });
 
-  console.log('admin/dashboard, user info: ',businessId)
+  if (!user || !user.business) {
+    redirect("/error?reason=business_not_found");
+  }
+
+  console.log("Business ID:", user.businessId);
+  console.log("Business Name:", user.business.name);
+
+  
+  const businessId = user.business.id;
+
+  console.log(businessId);
 
   if (!businessId) {
     throw new Error("No business associated with this account");
   }
 
   // Fetch stats with business filtering
-  const [total, pending, confirmed, revenue, recent] = await Promise.all([
-    db.booking.count({
+  // const [total, pending, confirmed, revenue, recent] = await Promise.all([
+  //   db.booking.count({
+  //     where: {
+  //       businessId,
+  //       deletedAt: null,
+  //     },
+  //   }),
+  //   db.booking.count({
+  //     where: {
+  //       businessId,
+  //       status: "PENDING",
+  //       deletedAt: null,
+  //     },
+  //   }),
+  //   db.booking.count({
+  //     where: {
+  //       businessId,
+  //       status: "CONFIRMED",
+  //       deletedAt: null,
+  //     },
+  //   }),
+  //   db.booking.aggregate({
+  //     _sum: { totalPrice: true },
+  //     where: {
+  //       businessId,
+  //       status: "COMPLETED",
+  //       deletedAt: null,
+  //     },
+  //   }),
+  //   db.booking.findMany({
+  //     where: {
+  //       businessId,
+  //       deletedAt: null,
+  //     },
+  //     orderBy: { createdAt: "desc" },
+  //     take: 10,
+  //     select: {
+  //       id: true,
+  //       customerName: true,
+  //       serviceName: true,
+  //       appointmentDate: true,
+  //       status: true,
+  //     },
+  //   }),
+  // ]);
+
+  // // Quick stats for today/this week
+  // const today = new Date();
+  // today.setHours(0, 0, 0, 0);
+  // const weekAgo = new Date();
+  // weekAgo.setDate(today.getDate() - 7);
+  // const [todayCount, weekCount] = await Promise.all([
+  //   db.booking.count({
+  //     where: {
+  //       businessId,
+  //       createdAt: { gte: today },
+  //       deletedAt: null,
+  //     },
+  //   }),
+  //   db.booking.count({
+  //     where: {
+  //       businessId,
+  //       createdAt: { gte: weekAgo },
+  //       deletedAt: null,
+  //     },
+  //   }),
+  // ]);
+
+
+  try {
+    // Fetch core stats sequentially
+    const total = await db.booking.count({
       where: {
         businessId,
         deletedAt: null,
       },
-    }),
-    db.booking.count({
-      where: {
-        businessId,
-        status: "PENDING",
-        deletedAt: null,
-      },
-    }),
-    db.booking.count({
-      where: {
-        businessId,
-        status: "CONFIRMED",
-        deletedAt: null,
-      },
-    }),
-    db.booking.aggregate({
-      _sum: { totalPrice: true },
-      where: {
-        businessId,
-        status: "COMPLETED",
-        deletedAt: null,
-      },
-    }),
-    db.booking.findMany({
+    });
+
+    // const pending = await db.booking.count({
+    //   where: {
+    //     businessId,
+    //     status: "PENDING",
+    //     deletedAt: null,
+    //   },
+    // });
+
+    // const confirmed = await db.booking.count({
+    //   where: {
+    //     businessId,
+    //     status: "CONFIRMED",
+    //     deletedAt: null,
+    //   },
+    // });
+
+    // const revenue = await db.booking.aggregate({
+    //   _sum: { totalPrice: true },
+    //   where: {
+    //     businessId,
+    //     status: "COMPLETED",
+    //     deletedAt: null,
+    //   },
+    // });
+
+    const recent = await db.booking.findMany({
       where: {
         businessId,
         deletedAt: null,
@@ -94,43 +181,44 @@ export default async function DashboardPage() {
         appointmentDate: true,
         status: true,
       },
-    }),
-  ]);
+    });
 
-  // Quick stats for today/this week
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const weekAgo = new Date();
-  weekAgo.setDate(today.getDate() - 7);
-  const [todayCount, weekCount] = await Promise.all([
-    db.booking.count({
+    // Date-based queries
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date();
+    weekAgo.setDate(today.getDate() - 7);
+
+    const todayCount = await db.booking.count({
       where: {
         businessId,
         createdAt: { gte: today },
         deletedAt: null,
       },
-    }),
-    db.booking.count({
+    });
+
+    const weekCount = await db.booking.count({
       where: {
         businessId,
         createdAt: { gte: weekAgo },
         deletedAt: null,
       },
-    }),
-  ]);
+    });
+   
+    // TODO: check if possible to add caching to reduce database requests
 
   return (
     <main className="container mx-auto py-8">
       <h1 className="mb-6 text-2xl font-bold">Dashboard Overview</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         <StatCard label="Total Bookings" value={total} />
-        <StatCard label="Pending" value={pending} color="bg-yellow-50" />
-        <StatCard label="Confirmed" value={confirmed} color="bg-green-50" />
-        <StatCard
+        {/* <StatCard label="Pending" value={pending} color="bg-yellow-50" /> */}
+        {/* <StatCard label="Confirmed" value={confirmed} color="bg-green-50" /> */}
+        {/* <StatCard
           label="Revenue"
           value={`$${revenue._sum.totalPrice?.toLocaleString() ?? 0}`}
           color="bg-blue-50"
-        />
+        /> */}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
@@ -199,5 +287,17 @@ export default async function DashboardPage() {
       </div>
     </main>
   );
-}
 
+
+    } catch (error) {
+    console.error('Dashboard query error:', error);
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">Error Loading Dashboard</h1>
+          <p className="text-gray-600 mt-2">Please refresh the page or try again later.</p>
+        </div>
+      </div>
+    );
+  }
+}
