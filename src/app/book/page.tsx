@@ -1,8 +1,10 @@
 import { Metadata } from "next";
 import { BookingForm } from "@/components/booking/BookingForm";
- 
-import { useCreateBooking } from "@/hooks/useBooking";
-import { useMutation } from "@tanstack/react-query";
+import { getBusinessBySlug } from "../../../lib/business";
+import { notFound } from "next/navigation";
+
+// import { useCreateBooking } from "@/hooks/useBooking";
+// import { useMutation } from "@tanstack/react-query";
 
 export const metadata: Metadata = {
   title: "Book Your Cleaning Service | SparkleClean",
@@ -19,12 +21,23 @@ export const metadata: Metadata = {
   },
 };
 
+interface BookingPageProps {
+  searchParams: { business?: string };
+}
+export default async function BookPage({ searchParams }: BookingPageProps) {
+  const businessSlug = searchParams.business;
 
+  console.log(businessSlug);
 
+  if (!businessSlug) {
+    notFound();
+  }
 
-export default function BookPage() {
+  const business = await getBusinessBySlug(businessSlug);
 
-    
+  if (!business) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -89,7 +102,8 @@ export default function BookPage() {
 
             {/* Form Content */}
             <div className="p-6 sm:p-8">
-              <BookingForm />
+              {/* TODO: modify the booking form to accept the props */}
+              <BookingForm business={business} services={business.services} />
             </div>
           </div>
         </div>

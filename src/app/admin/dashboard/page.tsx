@@ -42,9 +42,9 @@ export default async function DashboardPage() {
   console.log(data?.user.email)
 
   // Get the business ID from the user's metadata
-  const businessId = data.user.user_metadata.businessId;
+  const businessId = data.user;
 
-  console.log('admin/dashboard, businessId: ',businessId)
+  console.log('admin/dashboard, user info: ',businessId)
 
   if (!businessId) {
     throw new Error("No business associated with this account");

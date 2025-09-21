@@ -1,7 +1,7 @@
 // app/api/boookings/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserSession } from "@/app/(auth)/login/actions";
+import { getUserSession } from "../../../../../actions/auth";
 // import { getServerSession } from "next-auth";
 // import { authOptions } from "../../../../lib/auth/config";
 import { db } from "../../../../../lib/db";

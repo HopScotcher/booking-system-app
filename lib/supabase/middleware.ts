@@ -45,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     // is user is not logged in, these are the only routes they can access
     !user &&
     !request.nextUrl.pathname.includes("/login") ||
+     !request.nextUrl.pathname.includes("/auth") ||
     request.nextUrl.pathname.startsWith('/api/bookings') ||
      request.nextUrl.pathname.startsWith('/api/services')||
     // !request.nextUrl.pathname.includes('/auth') &&
