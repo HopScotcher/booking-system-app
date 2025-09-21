@@ -109,77 +109,82 @@ export async function getUserSession(){
   return {status: "success", user: data?.user}
 }
 
-export async function registerBusiness(formData: FormData) {
+ export async function registerStaffMember(formData: FormData) {
   try {
-    const businessName = formData.get('businessName') as string
     const ownerName = formData.get('ownerName') as string
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     
-    // Step 1: Create Supabase auth user
+    // Hard-coded business ID (replace with your actual business ID)
+    const BUSINESS_ID = 'cmf2py3pn0000esgpdf037kp3' // TODO: Replace with actual ID
+    
+    // Step 1: Verify the business exists
+    const existingBusiness = await db.business.findUnique({
+      where: {
+        id: BUSINESS_ID,
+        isActive: true,
+        deletedAt: null
+      }
+    })
+    
+    if (!existingBusiness) {
+      redirect('/error?reason=business_not_found')
+    }
+    
+    // Step 2: Check if user already exists in this business
+    const existingUser = await db.user.findFirst({
+      where: {
+        email,
+        businessId: BUSINESS_ID
+      }
+    })
+    
+    if (existingUser) {
+      redirect('/error?reason=user_already_exists')
+    }
+    
+    // Step 3: Create Supabase auth user
     const supabase = await createClient()
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          business_name: businessName,
+          business_name: existingBusiness.name,
           owner_name: ownerName
         }
       }
     })
-
+    
     if (authError || !authData.user) {
       redirect('/error?reason=signup_failed')
     }
-
-    // Step 2: Create business record
-    const slug = businessName.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50)
-
-    const business = await db.business.create({
-      data: {
-        name: businessName,
-        email,
-        slug: `${slug}-${Math.random().toString(36).substring(7)}`,
-        businessHours: {
-          monday: { open: '09:00', close: '17:00', closed: false },
-          tuesday: { open: '09:00', close: '17:00', closed: false },
-          wednesday: { open: '09:00', close: '17:00', closed: false },
-          thursday: { open: '09:00', close: '17:00', closed: false },
-          friday: { open: '09:00', close: '17:00', closed: false },
-          saturday: { open: '09:00', close: '17:00', closed: false },
-          sunday: { open: '09:00', close: '17:00', closed: true },
-        }
-      }
-    })
-
-    // Step 3: Sync user - create Prisma User record
+    
+    // Step 4: Sync user - create Prisma User record as admin for existing business
     const syncResult = await syncUserAfterSignup(
       authData.user.id,
       email,
       ownerName,
-      business.id,
+      BUSINESS_ID,
       'ADMIN'
     )
-
+    
     if (!syncResult.success) {
-      // Clean up business if user sync fails
-      await db.business.delete({ where: { id: business.id } })
+      // Clean up Supabase user if sync fails (no business to delete)
+      await supabase.auth.admin.deleteUser(authData.user.id)
       redirect('/error?reason=sync_failed')
     }
-
+    
+    console.log(`Staff member ${ownerName} added as admin to business ${existingBusiness.name}`)
+    
     revalidatePath('/', 'layout')
     redirect('/admin/dashboard')
     
   } catch (error) {
-    console.error('Registration error:', error)
+    console.error('Staff registration error:', error)
     redirect('/error?reason=registration_failed')
   }
 }
-
  
 
 // Add staff member (admin action)
