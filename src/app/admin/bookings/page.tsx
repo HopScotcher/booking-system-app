@@ -1,3 +1,5 @@
+// admin/bookings 
+
 import { Suspense } from "react";
 import { BookingsContent } from "@/components/admin/BookingsContent";
 

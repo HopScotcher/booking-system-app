@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 // import { getServerSession } from "next-auth";
 // import { authOptions } from "@/lib/auth/config";
 import { db } from "../../../../lib/db";
-import { getUserSession } from "@/app/(auth)/login/actions";
+// import { getUserSession } from "@/app/(auth)/login/actions";
+import { getUserSession } from "../../../../actions/auth";
 import { createClient } from "../../../../lib/supabase/server";
 import { getUserBusinessId } from "../../../../lib/business";
 
