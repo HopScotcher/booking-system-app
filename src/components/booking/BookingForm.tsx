@@ -32,8 +32,9 @@ const STEPS = [
 
 export interface BookingFormProps {
   className?: string;
-  business: Business;
-  services: Service[];
+  // TODO: switch these back to appropriate types, remove any
+  business: any; 
+  services: any;
 }
 
 export function BookingForm({
@@ -184,7 +185,7 @@ export function BookingForm({
 
   const getSelectedService = () => {
     // return servicesData?.data?.find((s) => s.id === formData.service);
-    return services.find((s) => s.id === formData.service);
+    return services.find((s:any) => s.id === formData.service);
   };
 
   const renderStepContent = () => {
