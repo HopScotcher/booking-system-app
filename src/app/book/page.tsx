@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { BookingForm } from "@/components/booking/BookingForm";
 import { getBusinessBySlug } from "../../../lib/business";
 import { notFound } from "next/navigation";
+import { Business } from "@prisma/client";
+import { toast } from "sonner";
 
 // import { useCreateBooking } from "@/hooks/useBooking";
 // import { useMutation } from "@tanstack/react-query";
@@ -21,22 +23,23 @@ export const metadata: Metadata = {
   },
 };
 
-interface BookingPageProps {
-  searchParams: { business?: string };
-}
-export default async function BookPage({ searchParams }: BookingPageProps) {
-  const businessSlug = searchParams.business;
+// interface BookingPageProps {
+//   params: { business?: string };
+// }
+export default async function BookPage() {
+  // const businessSlug =
+  //   (await params.business) || "SparkleClean-Professional-Services";
 
-  console.log(businessSlug);
+  // console.log(businessSlug);
 
-  if (!businessSlug) {
-    notFound();
-  }
+  // if (!businessSlug) {
+  //   notFound();
+  // }
 
-  const business = await getBusinessBySlug(businessSlug);
+  const business = await getBusinessBySlug("sparkle-clean");
 
   if (!business) {
-    notFound();
+    toast.error("Error loading business info");
   }
 
   return (
@@ -103,7 +106,7 @@ export default async function BookPage({ searchParams }: BookingPageProps) {
             {/* Form Content */}
             <div className="p-6 sm:p-8">
               {/* TODO: modify the booking form to accept the props */}
-              <BookingForm business={business} services={business.services} />
+              <BookingForm business={business} services={business?.services} />
             </div>
           </div>
         </div>
