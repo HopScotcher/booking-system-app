@@ -17,32 +17,33 @@ export default async function AdminRootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // TODO: use an action function here to reduce redundancy
+  const supabase = await createClient();
 
+   const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-// TODO: use an action function here to reduce redundancy 
-  const supabase = await createClient()
-  
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
   if (error || !user) {
-    redirect('/login')
+    redirect("/login");
   }
+
+  console.log("Signed in as: ", user.email, user.id);
 
   // Validate that user is properly synced between Supabase and Prisma
-  const syncStatus = await validateUserSync(user.email!)
-  
+  const syncStatus = await validateUserSync(user.email!);
+
   if (!syncStatus.synced) {
-    console.error('Admin user sync issue:', syncStatus.reason)
-    redirect(`/error?reason=${encodeURIComponent(`${syncStatus.reason}`)}`)
+    console.error("Admin user sync issue:", syncStatus.reason);
+    redirect(`/error?reason=${encodeURIComponent(`${syncStatus.reason}`)}`);
   }
-
-
 
   return (
     // <SessionProvider>
-      <Suspense fallback={<div>Loading...</div>}>
-        <DashboardLayout user={user}>{children}</DashboardLayout>
-      </Suspense>
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardLayout user={user}>{children}</DashboardLayout>
+    </Suspense>
     // </SessionProvider>
   );
 }

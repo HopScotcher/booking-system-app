@@ -66,28 +66,7 @@ export default async function BookingsPage({
       ],
     }),
   };
-
-  // Fetch bookings and total count
-  // const [bookings, totalCount] = await Promise.all([
-  //   db.booking.findMany({
-  //     where: whereClause,
-  //     orderBy: { createdAt: 'desc' },
-  //     take: limit,
-  //     skip: offset,
-  //     select: {
-  //       id: true,
-  //       customerName: true,
-  //       customerPhone: true,
-  //       customerEmail: true,
-  //       serviceName: true,
-  //       appointmentDate: true,
-  //       appointmentTime: true,
-  //       status: true,
-  //       confirmationCode: true,
-  //     },
-  //   }),
-  //   db.booking.count({ where: whereClause }),
-  // ])
+ 
 
   const bookings = await db.booking.findMany({
     where: whereClause,
