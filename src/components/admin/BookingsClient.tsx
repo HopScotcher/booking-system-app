@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BookingStatus } from "@prisma/client";
 import { toast } from "sonner";
@@ -68,6 +68,11 @@ const statusOptions = [
   { value: "NO_SHOW", label: "No Show" },
 ];
 
+type OptimisticUpdate = {
+  bookingId: string;
+  newStatus: BookingStatus;
+};
+
 export function BookingsPageClient({
   initialBookings,
   totalPages,
@@ -81,10 +86,18 @@ export function BookingsPageClient({
   const [isPending, startTransition] = useTransition();
   const [bookings, setBookings] = useState(initialBookings);
   const [search, setSearch] = useState(currentSearch);
-  //   const [status, setStatus] = useState(currentStatus)
-
   const [status, setStatus] = useState<StatusFilter>(
     currentStatus === "" ? "ALL" : (currentStatus as StatusFilter)
+  );
+
+  //   useOptimistic for booking status updates
+
+  const [optimisticBookings, updateOptimisticBooking] = useOptimistic(
+    initialBookings,
+    (state: Booking[], { bookingId, newStatus }: OptimisticUpdate) =>
+      state.map((booking) =>
+        booking.id === bookingId ? { ...booking, status: newStatus } : booking
+      )
   );
 
   // Update URL with new search params
@@ -124,11 +137,13 @@ export function BookingsPageClient({
     });
   };
 
-  // Handle booking status update
-  const updateBookingStatus = async (
+  const updateBookingStatusAction = async (
     bookingId: string,
     newStatus: BookingStatus
   ) => {
+    // Apply optimistic update immediately
+    updateOptimisticBooking({ bookingId, newStatus });
+
     try {
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: "PATCH",
@@ -136,24 +151,27 @@ export function BookingsPageClient({
         body: JSON.stringify({ status: newStatus, businessId }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update status");
-      }
+      const result = await response.json();
 
-      // Optimistic update
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId ? { ...booking, status: newStatus } : booking
-        )
-      );
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update status");
+      }
 
       toast.success("Booking status updated successfully");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update status"
       );
+
+      //automatic reverting coz of error
+      throw error;
     }
+  };
+
+  const handleStatusUpdate = (bookingId: string, newStatus: BookingStatus) => {
+    startTransition(() => {
+      updateBookingStatusAction(bookingId, newStatus);
+    });
   };
 
   // Generate pagination items
@@ -273,14 +291,14 @@ export function BookingsPageClient({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {bookings.length === 0 ? (
+            {optimisticBookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8">
                   No bookings found
                 </TableCell>
               </TableRow>
             ) : (
-              bookings.map((booking) => (
+              optimisticBookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
                     {booking.customerName}
@@ -299,11 +317,12 @@ export function BookingsPageClient({
                     <Select
                       value={booking.status}
                       onValueChange={(newStatus) =>
-                        updateBookingStatus(
+                        handleStatusUpdate(
                           booking.id,
                           newStatus as BookingStatus
                         )
                       }
+                      disabled={isPending}
                     >
                       <SelectTrigger className="w-[130px]">
                         <BookingStatusBadge status={booking.status} />
