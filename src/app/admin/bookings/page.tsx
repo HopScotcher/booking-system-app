@@ -1,8 +1,8 @@
-import { createClient } from "../../../../lib/supabase/server";
-import { db } from "../../../../lib/db";
 import { redirect } from "next/navigation";
 import { BookingStatus } from "@prisma/client";
 import { BookingsPageClient } from "@/components/admin/BookingsClient";
+import { createClient } from "../../../../lib/supabase/server";
+import { BookingsApiResponse } from "@/types/bookings";
 
 export const metadata = {
   title: "Bookings | Admin Dashboard",
@@ -20,10 +20,13 @@ export default async function BookingsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { page: pageParam, search: searchParam, status: statusParam } =
-    await searchParams;
+  const {
+    page: pageParam,
+    search: searchParam,
+    status: statusParam,
+  } = await searchParams;
 
-  // Authentication and business context
+  // Authentication check
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,100 +37,52 @@ export default async function BookingsPage({
     redirect("/admin/login");
   }
 
-  // Get user's business
-  const dbUser = await db.user.findUnique({
-    where: { email: user.email! },
-    include: { business: true },
+  // Build query params
+  const queryParams = new URLSearchParams({
+    page: pageParam || "1",
+    ...(searchParam && { search: searchParam }),
+    ...(statusParam && { status: statusParam }),
   });
 
-  if (!dbUser || !dbUser.business) {
-    redirect("/error?reason=business_not_found");
+  // Fetch bookings from API
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/bookings?${queryParams}`,
+    {
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    if (response.status === 401) {
+      redirect("/admin/login");
+    }
+    throw new Error(error.message || "Failed to fetch bookings");
   }
 
-  const businessId = dbUser.businessId;
-
-  // Parse search params
-  const page = parseInt(pageParam || "1");
-  const search = searchParam || "";
-  const status = statusParam || "";
-  const limit = 10;
-  const offset = (page - 1) * limit;
-
-  // Build where clause for filtering
-  const whereClause = {
-    businessId,
-    deletedAt: null,
-    ...(status && { status: status as BookingStatus }),
-    ...(search && {
-      OR: [
-        { customerName: { contains: search, mode: "insensitive" as const } },
-        { customerPhone: { contains: search, mode: "insensitive" as const } },
-        { customerEmail: { contains: search, mode: "insensitive" as const } },
-      ],
-    }),
-  };
- 
-
-  const bookings = await db.booking.findMany({
-    where: whereClause,
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    skip: offset,
-    select: {
-      id: true,
-      customerName: true,
-      customerPhone: true,
-      customerEmail: true,
-      serviceName: true,
-      appointmentDate: true,
-      appointmentTime: true,
-      status: true,
-      confirmationCode: true,
-    },
-  });
-
-  const totalCount = await db.booking.count({ where: whereClause });
-
-  const totalPages = Math.ceil(totalCount / limit);
+  const { data }: BookingsApiResponse = await response.json();
+  const { bookings, pagination } = data;
 
   return (
     <main className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Bookings</h1>
         <div className="text-sm text-muted-foreground">
-          {totalCount} total bookings
+          {pagination.total} total bookings
         </div>
       </div>
 
       <BookingsPageClient
         initialBookings={bookings}
-        totalPages={totalPages}
-        currentPage={page}
-        currentSearch={search}
-        currentStatus={status}
-        businessId={businessId}
+        totalPages={pagination.totalPages}
+        currentPage={pagination.page}
+        currentSearch={searchParam || ""}
+        currentStatus={statusParam || ""}
+        businessId={user.id}
       />
     </main>
   );
 }
-
-// // admin/bookings
-
-// import { Suspense } from "react";
-// import { BookingsContent } from "@/components/admin/BookingsContent";
-
-// export const metadata = {
-//   title: "Bookings | Admin Dashboard",
-//   description: "Manage and review all bookings for your business.",
-// };
-
-// export default function BookingsPage() {
-//   return (
-//     <main className="container mx-auto py-8">
-//       <h1 className="mb-6 text-2xl font-bold">Bookings</h1>
-//       <Suspense fallback={<div>Loading bookings...</div>}>
-//         <BookingsContent />
-//       </Suspense>
-//     </main>
-//   );
-// }
