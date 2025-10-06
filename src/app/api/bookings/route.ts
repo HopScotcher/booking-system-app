@@ -10,6 +10,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { BookingStatus, Service } from "@prisma/client";
 import { getUserSession } from "../../../../actions/auth";
 import { getCurrentUserBusiness } from "../../../../lib/business";
+import { createClient } from "../../../../lib/supabase/server";
 
 // Rate limiters for different endpoints
 const customerLimiter = rateLimit({
@@ -213,20 +214,36 @@ export async function POST(request: NextRequest) {
 // GET - Admin booking fetching (Phase 3)
 export async function GET(req: NextRequest) {
   try {
-    // Auth check
+    // const response = await getUserSession();
 
-    const response = await getUserSession();
+    // console.log("user session info", response)
+
+     const supabase = await createClient()
+    
+      const {data:authData, error:authError} = await supabase.auth.getUser()
+    
+      if (authError || !authData?.user) {
+        return NextResponse.json({ error: "Unauthorized", code: 401 });
+      }
+    
+      const user = await db.user.findUnique({
+        where: {email:authData.user.email}, 
+        select:{id:true, email:true, role:true, businessId: true}
+      })
+
+      console.log("user infor", user)
+    
 
     if (
-      !response?.user ||
-      (response.user.role !== "ADMIN" &&
-        response.user.role !== "STAFF" &&
-        response.user.role !== "SUPER_ADMIN")
+      !user ||
+      ( user.role !== "ADMIN" &&
+        user.role !== "STAFF" &&
+        user.role !== "SUPER_ADMIN")
     ) {
       return NextResponse.json({ error: "Unauthorized", code: 401 });
     }
 
-    // Rate limiting for admin users
+    // Rate limiting 
     const identifier =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
@@ -238,85 +255,61 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    // Query params
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "10", 10), 50); // Cap at 50
-    const status = searchParams.get("status") as BookingStatus | null;
-    const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
-    const search = searchParams.get("search")?.trim() || "";
-    const serviceId = searchParams.get("service") || undefined;
+// Parse search params
+  const searchParams = new URL(req.url).searchParams;
+  const pageParam = searchParams.get('page');
+  const searchParam = searchParams.get('search');
+  const statusParam = searchParams.get('status');
+  const page = parseInt(pageParam || "1");
+  const search = searchParam || "";
+  const status = statusParam || "";
+  const limit = 10;
+  const offset = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {
-      deletedAt: null, // Only show non-deleted bookings
-    };
+  // Build where clause for filtering
+  const whereClause = {
+    businessId: "cmf2py3pn0000esgpdf037kp3",
+    deletedAt: null,
+    ...(status && { status: status as BookingStatus }),
+    ...(search && {
+      OR: [
+        { customerName: { contains: search, mode: "insensitive" as const } },
+        { customerPhone: { contains: search, mode: "insensitive" as const } },
+        { customerEmail: { contains: search, mode: "insensitive" as const } },
+      ],
+    }),
+  };
+ 
 
-    if (status) where.status = status;
-    if (serviceId) where.serviceId = serviceId;
+  const bookings = await db.booking.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    skip: offset,
+    select: {
+      id: true,
+      customerName: true,
+      customerPhone: true,
+      customerEmail: true,
+      serviceName: true,
+      appointmentDate: true,
+      appointmentTime: true,
+      status: true,
+      confirmationCode: true,
+    },
+  });
 
-    if (dateFrom || dateTo) {
-      where.appointmentDate = {};
-      if (dateFrom) where.appointmentDate.gte = new Date(dateFrom);
-      if (dateTo) where.appointmentDate.lte = new Date(dateTo);
-    }
+  const totalCount = await db.booking.count({ where: whereClause });
 
-    if (search) {
-      where.OR = [
-        { customerName: { contains: search, mode: "insensitive" } },
-        { customerEmail: { contains: search, mode: "insensitive" } },
-        { customerPhone: { contains: search, mode: "insensitive" } },
-        { confirmationCode: { contains: search, mode: "insensitive" } },
-      ];
-    }
+  const totalPages = Math.ceil(totalCount / limit);
 
-    // Pagination
-    const skip = (page - 1) * limit;
 
-    const [total, bookings] = await Promise.all([
-      db.booking.count({ where }),
-      db.booking.findMany({
-        where,
-        orderBy: { appointmentDate: "desc" },
-        skip,
-        take: limit,
-        include: {
-          service: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              duration: true,
-            },
-          },
-          business: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-            },
-          },
-          // user: {
-          //   select: {
-          //     id: true,
-          //     name: true,
-          //     email: true,
-          //   },
-          // },
-        },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
-
-    return NextResponse.json({
+return NextResponse.json({
       success: true,
       data: {
         bookings,
         pagination: {
-          total,
+          totalCount,
           page,
           limit,
           totalPages,
@@ -335,6 +328,82 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
+
+
+
+    // Query params
+    // const { searchParams } = new URL(
+    //   req.url,
+    //   `http://${req.headers.get("host")}`
+    // );
+    // const page = parseInt(searchParams.get("page") || "1", 10);
+    // const limit = Math.min(parseInt(searchParams.get("limit") || "10", 10), 50); // Cap at 50
+    // const status = searchParams.get("status") as BookingStatus | null;
+    // const dateFrom = searchParams.get("dateFrom");
+    // const dateTo = searchParams.get("dateTo");
+    // const search = searchParams.get("search")?.trim() || "";
+    // const serviceId = searchParams.get("service") || undefined;
+
+
+
+    // Build where clause
+    // const where: any = {
+    //   deletedAt: null, // Only show non-deleted bookings
+    // };
+
+    // if (status) where.status = status;
+    // if (serviceId) where.serviceId = serviceId;
+
+    // if (dateFrom || dateTo) {
+    //   where.appointmentDate = {};
+    //   if (dateFrom) where.appointmentDate.gte = new Date(dateFrom);
+    //   if (dateTo) where.appointmentDate.lte = new Date(dateTo);
+    // }
+
+    // if (search) {
+    //   where.OR = [
+    //     { customerName: { contains: search, mode: "insensitive" } },
+    //     { customerEmail: { contains: search, mode: "insensitive" } },
+    //     { customerPhone: { contains: search, mode: "insensitive" } },
+    //     { confirmationCode: { contains: search, mode: "insensitive" } },
+    //   ];
+    // }
+
+    // Pagination
+    // const skip = (page - 1) * limit;
+
+    // const [total, bookings] = await Promise.all([
+    //   db.booking.count({ where }),
+    //   db.booking.findMany({
+    //     where,
+    //     orderBy: { appointmentDate: "desc" },
+    //     skip,
+    //     take: limit,
+    //     include: {
+    //       service: {
+    //         select: {
+    //           id: true,
+    //           name: true,
+    //           price: true,
+    //           duration: true,
+    //         },
+    //       },
+    //       business: {
+    //         select: {
+    //           id: true,
+    //           name: true,
+    //           email: true,
+    //           phone: true,
+    //         },
+    //       },
+           
+    //     },
+    //   }),
+    // ]);
+
+    // const totalPages = Math.ceil(total / limit);
+
+    
 }
 
 // Method restrictions

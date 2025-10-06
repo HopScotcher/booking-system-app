@@ -25,7 +25,8 @@ export async function getCurrentUserBusiness(userEmail: string) {
 
 // Get business by slug (for public booking pages)
 export async function getBusinessBySlug(slug: string) {
-  return await db.business.findUnique({
+  try{
+return await db.business.findUnique({
     where: { 
       slug,
       isActive: true,
@@ -40,6 +41,10 @@ export async function getBusinessBySlug(slug: string) {
       }
     }
   })
+  }catch(error){
+    console.log(error)
+  }
+  
 }
 
 // Get user's business ID (lightweight function for quick checks)

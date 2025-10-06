@@ -100,13 +100,22 @@ export async function signOut(){
 export async function getUserSession(){
   const supabase = await createClient()
 
-  const {data, error} = await supabase.auth.getUser()
+  const {data:authData, error:authError} = await supabase.auth.getUser()
 
-  if(error){
+  if (authError || !authData?.user) {
+    return null;
+  }
+
+  const user = await db.user.findUnique({
+    where: {email:authData.user.email}, 
+    select:{id:true, email:true, role:true, businessId: true}
+  })
+
+  if(!user){
     return null
   }
 
-  return {status: "success", user: data?.user}
+  return {status: "success", user}
 }
 
  export async function registerStaffMember(formData: FormData) {

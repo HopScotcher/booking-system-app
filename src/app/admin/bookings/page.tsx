@@ -3,6 +3,7 @@ import { BookingStatus } from "@prisma/client";
 import { BookingsPageClient } from "@/components/admin/BookingsClient";
 import { createClient } from "../../../../lib/supabase/server";
 import { BookingsApiResponse } from "@/types/bookings";
+import { getUserSession } from "../../../../actions/auth";
 
 export const metadata = {
   title: "Bookings | Admin Dashboard",
@@ -63,13 +64,14 @@ export default async function BookingsPage({
     throw new Error(error.message || "Failed to fetch bookings");
   }
 
-  const { data }: BookingsApiResponse = await response.json();
-  // const jsonResponse = await response.json();
-  // console.log("API Response:", jsonResponse);
-  console.log("data from api",data)
-  const { bookings, pagination } = await data;
-
-  // const data = {bookings:[], pagination:{totalPages: 12},  }
+  
+  const jsonResponse = await response.json();
+  console.log("API Response:",jsonResponse)
+  
+  const { data }: BookingsApiResponse = await jsonResponse;
+   
+  // const { bookings, pagination } = await data;
+ 
 
   return (
     <main className="container mx-auto py-8">
@@ -81,9 +83,9 @@ export default async function BookingsPage({
       </div>
 
       <BookingsPageClient
-        initialBookings={data.bookings}
-        totalPages={data.pagination.totalPages}
-        currentPage={data.pagination.page}
+        initialBookings={data?.bookings}
+        totalPages={data?.pagination.totalPages}
+        currentPage={data?.pagination.page}
         currentSearch={searchParam || ""}
         currentStatus={statusParam || ""}
         businessId={user.id}
