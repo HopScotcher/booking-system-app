@@ -46,7 +46,7 @@ export default async function BookingsPage({
 
   // Fetch bookings from API
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/bookings?${queryParams}`,
+    `http://localhost:3000/api/bookings?${queryParams}`,
     {
       cache: "no-store",
       headers: {
@@ -64,21 +64,26 @@ export default async function BookingsPage({
   }
 
   const { data }: BookingsApiResponse = await response.json();
-  const { bookings, pagination } = data;
+  // const jsonResponse = await response.json();
+  // console.log("API Response:", jsonResponse);
+  console.log("data from api",data)
+  const { bookings, pagination } = await data;
+
+  // const data = {bookings:[], pagination:{totalPages: 12},  }
 
   return (
     <main className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Bookings</h1>
         <div className="text-sm text-muted-foreground">
-          {pagination.total} total bookings
+          {/* {data?.pagination.total} total bookings */}
         </div>
       </div>
 
       <BookingsPageClient
-        initialBookings={bookings}
-        totalPages={pagination.totalPages}
-        currentPage={pagination.page}
+        initialBookings={data.bookings}
+        totalPages={data.pagination.totalPages}
+        currentPage={data.pagination.page}
         currentSearch={searchParam || ""}
         currentStatus={statusParam || ""}
         businessId={user.id}
