@@ -223,7 +223,7 @@ export async function GET(req: NextRequest) {
       const {data:authData, error:authError} = await supabase.auth.getUser()
     
       if (authError || !authData?.user) {
-        return NextResponse.json({ error: "Unauthorized", code: 401 });
+        return NextResponse.json({ error: "Unauthorized route 1", code: 401 });
       }
     
       const user = await db.user.findUnique({
@@ -240,7 +240,7 @@ export async function GET(req: NextRequest) {
         user.role !== "STAFF" &&
         user.role !== "SUPER_ADMIN")
     ) {
-      return NextResponse.json({ error: "Unauthorized", code: 401 });
+      return NextResponse.json({ error: "Unauthorized route 2", code: 401 });
     }
 
     // Rate limiting 

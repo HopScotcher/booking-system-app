@@ -84,14 +84,12 @@ export function BookingsPageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [bookings, setBookings] = useState(initialBookings);
   const [search, setSearch] = useState(currentSearch);
   const [status, setStatus] = useState<StatusFilter>(
     currentStatus === "" ? "ALL" : (currentStatus as StatusFilter)
   );
 
-  //   useOptimistic for booking status updates
-
+  // Use optimistic updates as single source of truth for booking status
   const [optimisticBookings, updateOptimisticBooking] = useOptimistic(
     initialBookings,
     (state: Booking[], { bookingId, newStatus }: OptimisticUpdate) =>
@@ -99,6 +97,49 @@ export function BookingsPageClient({
         booking.id === bookingId ? { ...booking, status: newStatus } : booking
       )
   );
+
+  const updateBookingStatusAction = async (
+    bookingId: string,
+    newStatus: BookingStatus
+  ) => {
+    const previousStatus = optimisticBookings.find(
+      (booking: Booking) => booking.id === bookingId
+    )?.status;
+    if (!previousStatus) return;
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus, businessId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update status");
+      }
+
+      toast.success("Booking status updated successfully");
+    } catch (error) {
+      // Revert optimistic update on error
+      startTransition(() => {
+        updateOptimisticBooking({ bookingId, newStatus: previousStatus });
+      });
+
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update status"
+      );
+    }
+  };
+
+  const handleStatusUpdate = (bookingId: string, newStatus: BookingStatus) => {
+    // Wrap the optimistic update in startTransition
+    startTransition(() => {
+      updateOptimisticBooking({ bookingId, newStatus });
+      updateBookingStatusAction(bookingId, newStatus);
+    });
+  };
 
   // Update URL with new search params
   const updateSearchParams = (newParams: Record<string, string>) => {
@@ -137,42 +178,6 @@ export function BookingsPageClient({
     });
   };
 
-  const updateBookingStatusAction = async (
-    bookingId: string,
-    newStatus: BookingStatus
-  ) => {
-    // Apply optimistic update immediately
-    updateOptimisticBooking({ bookingId, newStatus });
-
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, businessId }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to update status");
-      }
-
-      toast.success("Booking status updated successfully");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update status"
-      );
-
-      //automatic reverting coz of error
-      throw error;
-    }
-  };
-
-  const handleStatusUpdate = (bookingId: string, newStatus: BookingStatus) => {
-    startTransition(() => {
-      updateBookingStatusAction(bookingId, newStatus);
-    });
-  };
 
   // Generate pagination items
   const generatePaginationItems = () => {
@@ -322,7 +327,6 @@ export function BookingsPageClient({
                           newStatus as BookingStatus
                         )
                       }
-                      disabled={isPending}
                     >
                       <SelectTrigger className="w-[130px]">
                         <BookingStatusBadge status={booking.status} />

@@ -39,7 +39,8 @@ export default async function BookPage() {
   const business = await getBusinessBySlug("sparkle-clean");
 
   if (!business) {
-    toast.error("Error loading business info");
+    // toast.error("Error loading business info");
+    console.log("Error loading business info")
   }
 
   return (
