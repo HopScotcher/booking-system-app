@@ -6,21 +6,23 @@ import { getUserSession } from "../../../../../actions/auth";
 // import { authOptions } from "../../../../lib/auth/config";
 import { db } from "../../../../../lib/db";
 import { BookingStatus } from "@prisma/client";
+interface searchParams {
+  id: string;
+}
 
 // GET: Fetch booking details by ID (public)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<searchParams> }
 ) {
   try {
+    const response = await getUserSession();
 
-     const response = await getUserSession()
-    
-      if(!response?.user){
-        return NextResponse.json({error: 'Unauthorized'})
-      }
+    if (!response?.user) {
+      return NextResponse.json({ error: "Unauthorized" });
+    }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         {
@@ -76,7 +78,10 @@ export async function GET(
     return NextResponse.json(
       {
         success: false,
-        error: { code: "DATABASE_ERROR", message: "Failed to retrieve booking details" },
+        error: {
+          code: "DATABASE_ERROR",
+          message: "Failed to retrieve booking details",
+        },
       },
       { status: 500 }
     );
@@ -86,26 +91,30 @@ export async function GET(
 // PATCH: Update booking status by ID (admin/staff only)
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<searchParams> }
 ) {
   try {
     const session = await getUserSession();
-    if (
-      !session ||
-      (session.user.role !== "ADMIN" &&
-        session.user.role !== "STAFF" &&
-        session.user.role !== "SUPER_ADMIN")
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: "UNAUTHORIZED", message: "Unauthorized" },
-        },
-        { status: 401 }
-      );
+    // if (
+    //   !session ||
+    //   (session.user.role !== "ADMIN" &&
+    //     session.user.role !== "STAFF" &&
+    //     session.user.role !== "SUPER_ADMIN")
+    // ) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: { code: "UNAUTHORIZED", message: "Unauthorized" },
+    //     },
+    //     { status: 401 }
+    //   );
+    // }
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" });
     }
 
-    const bookingId = params.id;
+    const { id: bookingId } = await params;
     if (!bookingId) {
       return NextResponse.json(
         {
@@ -122,7 +131,10 @@ export async function PATCH(
       return NextResponse.json(
         {
           success: false,
-          error: { code: "INVALID_STATUS", message: "Invalid or missing status value" },
+          error: {
+            code: "INVALID_STATUS",
+            message: "Invalid or missing status value",
+          },
         },
         { status: 400 }
       );

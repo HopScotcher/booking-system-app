@@ -1,9 +1,13 @@
+// app/admin/bookings/page.tsx
+
+
 import { redirect } from "next/navigation";
 import { BookingStatus } from "@prisma/client";
 import { BookingsPageClient } from "@/components/admin/BookingsClient";
 import { createClient } from "../../../../lib/supabase/server";
 import { BookingsApiResponse } from "@/types/bookings";
 import { getUserSession } from "../../../../actions/auth";
+import { headers } from "next/headers";
 
 export const metadata = {
   title: "Bookings | Admin Dashboard",
@@ -45,6 +49,8 @@ export default async function BookingsPage({
     ...(statusParam && { status: statusParam }),
   });
 
+  const headersBody = await headers()
+
   // Fetch bookings from API
   const response = await fetch(
     `http://localhost:3000/api/bookings?${queryParams}`,
@@ -52,6 +58,7 @@ export default async function BookingsPage({
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
+        Cookie: headersBody.get("cookie") || "",
       },
     }
   );
@@ -64,14 +71,12 @@ export default async function BookingsPage({
     throw new Error(error.message || "Failed to fetch bookings");
   }
 
-  
   const jsonResponse = await response.json();
-  console.log("API Response:",jsonResponse)
-  
+  console.log("API Response:", jsonResponse);
+
   const { data }: BookingsApiResponse = await jsonResponse;
-   
+
   // const { bookings, pagination } = await data;
- 
 
   return (
     <main className="container mx-auto py-8">
